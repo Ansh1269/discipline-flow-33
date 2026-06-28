@@ -428,21 +428,46 @@ function Coach() {
             onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }}
           />
           <div className="flex-1 flex flex-col gap-2">
-            {pendingImages.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+            {(pendingImages.length > 0 || uploading.length > 0) && (
+              <div className="flex flex-wrap gap-2 items-end">
                 {pendingImages.map((src, idx) => (
-                  <div key={idx} className="relative group">
+                  <div key={idx} className={`relative group ${chat.isPending ? "opacity-60" : ""}`}>
                     <img src={src} alt="" className="size-14 rounded-lg object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setPendingImages((p) => p.filter((_, i) => i !== idx))}
-                      className="absolute -top-1.5 -right-1.5 size-5 grid place-items-center rounded-full bg-background border shadow-sm hover:bg-red/10"
-                      aria-label="Remove image"
-                    >
-                      <X className="size-3" />
-                    </button>
+                    {chat.isPending && (
+                      <div className="absolute inset-0 grid place-items-center rounded-lg bg-background/60">
+                        <Loader2 className="size-4 animate-spin text-emerald" />
+                      </div>
+                    )}
+                    {!chat.isPending && (
+                      <button
+                        type="button"
+                        onClick={() => setPendingImages((p) => p.filter((_, i) => i !== idx))}
+                        className="absolute -top-1.5 -right-1.5 size-5 grid place-items-center rounded-full bg-background border shadow-sm hover:bg-red/10"
+                        aria-label="Remove image"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    )}
                   </div>
                 ))}
+                {uploading.map((u) => (
+                  <div key={u.name} className="size-14 rounded-lg glass-soft border border-border/40 flex flex-col items-center justify-center gap-1 px-1" title={`Uploading ${u.name}`}>
+                    <Loader2 className="size-3.5 animate-spin text-emerald" />
+                    <div className="w-10 h-1 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full bg-emerald transition-all" style={{ width: `${u.progress}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {chat.isPending && pendingImages.length > 0 && (
+              <div className="text-[11px] text-muted-foreground flex items-center gap-1.5" role="status" aria-live="polite">
+                <Loader2 className="size-3 animate-spin" /> Sending {pendingImages.length === 1 ? "image" : `${pendingImages.length} images`} to coach…
+              </div>
+            )}
+            {uploading.length > 0 && (
+              <div className="text-[11px] text-muted-foreground" role="status" aria-live="polite">
+                Preparing {uploading.length === 1 ? "image" : `${uploading.length} images`}…
               </div>
             )}
             <div className="flex gap-2 items-end">
