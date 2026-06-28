@@ -1,12 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, TrendingUp, AlertCircle, Trophy, Wand2, Loader2 } from "lucide-react";
-import { todayISO } from "@/lib/date";
-import { generateCoachReport } from "@/lib/coach.functions";
+import { Sparkles, Wand2, Loader2, Send, User, Bot } from "lucide-react";
+import { generateCoachReport, chatWithCoach } from "@/lib/coach.functions";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/coach")({
@@ -14,10 +12,25 @@ export const Route = createFileRoute("/_authenticated/coach")({
   component: Coach,
 });
 
+type Msg = { role: "user" | "assistant"; content: string };
+const SUGGESTIONS = [
+  "How am I doing this week?",
+  "What habit should I focus on?",
+  "Plan my ideal tomorrow",
+  "Where am I slipping?",
+];
+
 function Coach() {
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [period, setPeriod] = useState<"week" | "month">("week");
+  const [messages, setMessages] = useState<Msg[]>([
+    { role: "assistant", content: "Hi — I'm your DisciplineOS coach. Ask me anything about your routines, habits, focus, or what to do next. I can see your last 14 days." },
+  ]);
+  const [input, setInput] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
   const runReport = useServerFn(generateCoachReport);
+  const runChat = useServerFn(chatWithCoach);
+
   const ai = useMutation({
     mutationFn: async (p: "week" | "month") => runReport({ data: { period: p } }),
     onSuccess: (res) => {
@@ -27,19 +40,30 @@ function Coach() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "AI request failed"),
   });
 
-  const { data: stats } = useQuery({
-    queryKey: ["coach-stats"],
-    queryFn: async () => {
-      const startD = new Date(); startD.setDate(startD.getDate() - 7);
-      const start = startD.toISOString().slice(0, 10);
-      const { data: tasks } = await supabase.from("tasks").select("status, category, scheduled_date").gte("scheduled_date", start);
-      const { data: focus } = await supabase.from("focus_sessions").select("duration_minutes").gte("session_date", start);
-      const { data: habits } = await supabase.from("habits").select("name, current_streak").eq("archived", false);
-      return { tasks: tasks ?? [], focus: focus ?? [], habits: habits ?? [] };
+  const chat = useMutation({
+    mutationFn: async (history: Msg[]) => runChat({ data: { messages: history } }),
+    onSuccess: (res) => {
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      setMessages((m) => [...m, { role: "assistant", content: res.message }]);
     },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Chat failed"),
   });
 
-  const insights = buildInsights(stats);
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, chat.isPending]);
+
+  const send = (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || chat.isPending) return;
+    const next: Msg[] = [...messages, { role: "user", content: trimmed }];
+    setMessages(next);
+    setInput("");
+    chat.mutate(next.filter((m) => m.role !== "assistant" || m.content.length < 8000));
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -48,14 +72,60 @@ function Coach() {
           <div className="size-10 rounded-xl bg-emerald/15 grid place-items-center"><Sparkles className="size-5 text-emerald" /></div>
           <div>
             <h1 className="font-display text-3xl font-bold">AI Coach</h1>
-            <p className="text-sm text-muted-foreground">Insights from your last 7 days.</p>
+            <p className="text-sm text-muted-foreground">Chat with an LLM grounded in your real activity.</p>
           </div>
         </div>
       </header>
 
+      <div className="glass rounded-3xl p-4 flex flex-col" style={{ height: "min(70vh, 600px)" }}>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex gap-2 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
+              <div className={`size-8 shrink-0 rounded-xl grid place-items-center ${m.role === "user" ? "bg-purple/15 text-purple" : "bg-emerald/15 text-emerald"}`}>
+                {m.role === "user" ? <User className="size-4" /> : <Bot className="size-4" />}
+              </div>
+              <div className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${m.role === "user" ? "bg-purple/15" : "glass-soft"}`}>
+                {m.content}
+              </div>
+            </div>
+          ))}
+          {chat.isPending && (
+            <div className="flex gap-2">
+              <div className="size-8 rounded-xl bg-emerald/15 text-emerald grid place-items-center"><Bot className="size-4" /></div>
+              <div className="glass-soft rounded-2xl px-3.5 py-2.5 text-sm flex items-center gap-2 text-muted-foreground"><Loader2 className="size-3.5 animate-spin" /> Thinking…</div>
+            </div>
+          )}
+        </div>
+
+        {messages.length <= 1 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {SUGGESTIONS.map((s) => (
+              <button key={s} onClick={() => send(s)} className="text-xs px-3 py-1.5 rounded-full glass-soft hover:bg-emerald/10 transition">{s}</button>
+            ))}
+          </div>
+        )}
+
+        <form
+          onSubmit={(e) => { e.preventDefault(); send(input); }}
+          className="mt-3 flex gap-2 items-end"
+        >
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
+            rows={1}
+            placeholder="Ask your coach anything…"
+            className="flex-1 resize-none glass-soft rounded-2xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald/40 max-h-32"
+          />
+          <Button type="submit" size="icon" disabled={chat.isPending || !input.trim()} className="bg-emerald hover:bg-emerald/90 text-emerald-foreground rounded-2xl size-10 shrink-0">
+            <Send className="size-4" />
+          </Button>
+        </form>
+      </div>
+
       <div className="glass rounded-3xl p-5">
         <div className="flex items-center justify-between gap-3 mb-3">
-          <h2 className="font-display font-semibold flex items-center gap-2"><Wand2 className="size-4 text-emerald" /> AI-generated report</h2>
+          <h2 className="font-display font-semibold flex items-center gap-2"><Wand2 className="size-4 text-emerald" /> Generated report</h2>
           <div className="flex gap-1 text-xs">
             <button onClick={() => setPeriod("week")} className={`px-2.5 py-1 rounded-lg ${period === "week" ? "bg-emerald/15 text-emerald" : "text-muted-foreground"}`}>Week</button>
             <button onClick={() => setPeriod("month")} className={`px-2.5 py-1 rounded-lg ${period === "month" ? "bg-emerald/15 text-emerald" : "text-muted-foreground"}`}>Month</button>
@@ -64,58 +134,12 @@ function Coach() {
         {aiReport ? (
           <p className="text-sm leading-relaxed whitespace-pre-wrap">{aiReport}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">Generate a personalized report from your real activity.</p>
+          <p className="text-sm text-muted-foreground">Generate a structured summary of your real activity.</p>
         )}
         <Button onClick={() => ai.mutate(period)} disabled={ai.isPending} className="mt-4 bg-emerald hover:bg-emerald/90 text-emerald-foreground">
           {ai.isPending ? <><Loader2 className="size-4 animate-spin" /> Thinking…</> : <><Sparkles className="size-4" /> Generate {period === "week" ? "weekly" : "monthly"} report</>}
         </Button>
       </div>
-
-      <div className="glass rounded-3xl p-6">
-        <h2 className="font-display font-semibold mb-3">Quick read</h2>
-        <p className="text-sm leading-relaxed text-muted-foreground">{insights.summary}</p>
-      </div>
-
-      <div className="space-y-3">
-        {insights.cards.map((c, i) => (
-          <div key={i} className="glass-soft rounded-2xl p-4 flex gap-3">
-            <div className={`size-9 shrink-0 rounded-xl grid place-items-center ${c.tone === "good" ? "bg-emerald/15 text-emerald" : c.tone === "warn" ? "bg-orange/15 text-orange" : "bg-purple/15 text-purple"}`}>
-              <c.icon className="size-4" />
-            </div>
-            <div className="flex-1">
-              <div className="font-medium text-sm">{c.title}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{c.body}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <p className="text-[10px] text-center text-muted-foreground">Coach insights update as you log tasks, habits, and focus sessions. Today: {todayISO()}</p>
     </div>
   );
-}
-
-function buildInsights(stats?: { tasks: { status: string; category: string }[]; focus: { duration_minutes: number }[]; habits: { name: string; current_streak: number }[] }) {
-  if (!stats) return { summary: "Loading…", cards: [] as { tone: "good"|"warn"|"info"; icon: typeof TrendingUp; title: string; body: string }[] };
-  const total = stats.tasks.length;
-  const done = stats.tasks.filter((t) => t.status === "completed").length;
-  const missed = stats.tasks.filter((t) => t.status === "missed" || t.status === "late").length;
-  const focusH = Math.round(stats.focus.reduce((s, r) => s + r.duration_minutes, 0) / 60 * 10) / 10;
-  const rate = total ? Math.round((done / total) * 100) : 0;
-  const topHabit = [...stats.habits].sort((a, b) => b.current_streak - a.current_streak)[0];
-
-  const summary = total === 0
-    ? "Add a few tasks and habits this week so I can start giving you real insights."
-    : `Over the last 7 days you completed ${done} of ${total} tasks (${rate}%) and logged ${focusH}h of focus.${topHabit ? ` Strongest habit: ${topHabit.name} (${topHabit.current_streak}-day streak).` : ""}`;
-
-  const cards: { tone: "good"|"warn"|"info"; icon: typeof TrendingUp; title: string; body: string }[] = [];
-  if (rate >= 75) cards.push({ tone: "good", icon: Trophy, title: "You're winning the week", body: "Completion above 75%. Keep the momentum — consider raising your goals." });
-  else if (rate >= 50) cards.push({ tone: "info", icon: TrendingUp, title: "Solid progress", body: "You're past halfway. Front-load tomorrow's first 90 minutes for max impact." });
-  else if (total > 0) cards.push({ tone: "warn", icon: AlertCircle, title: "Discipline gap", body: "Completion under 50%. Try planning fewer, sharper tasks per day." });
-
-  if (missed >= 3) cards.push({ tone: "warn", icon: AlertCircle, title: "Missed tasks piling up", body: `${missed} tasks missed or late. Move them to a specific time block instead of leaving them open.` });
-  if (focusH < 5 && total > 0) cards.push({ tone: "info", icon: TrendingUp, title: "Add deep work blocks", body: "Less than 5h of focus this week. Schedule two 90-min deep work blocks next week." });
-  if (topHabit && topHabit.current_streak >= 7) cards.push({ tone: "good", icon: Trophy, title: `${topHabit.current_streak} days of ${topHabit.name}`, body: "Stacking another small habit on top of this routine is the cheapest growth available right now." });
-
-  return { summary, cards };
 }

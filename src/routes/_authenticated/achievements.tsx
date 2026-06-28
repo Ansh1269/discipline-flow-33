@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Flame, Star, Award, Zap, Target, Crown, Sparkles } from "lucide-react";
+import { Trophy, Flame, Star, Award, Zap, Target, Crown, Sparkles, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/achievements")({
   head: () => ({ meta: [{ title: "Achievements — DisciplineOS" }] }),
@@ -48,6 +48,14 @@ function Achievements() {
   const xpForNext = (stats?.level ?? 1) * 500;
   const xpProgress = stats ? Math.min(100, Math.round((stats.xp / xpForNext) * 100)) : 0;
 
+  const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100, 365];
+  const streak = stats?.streak ?? 0;
+  const nextMilestone = STREAK_MILESTONES.find((m) => m > streak) ?? streak;
+  const prevMilestone = [...STREAK_MILESTONES].reverse().find((m) => m <= streak) ?? 0;
+  const streakPct = nextMilestone > prevMilestone
+    ? Math.min(100, Math.round(((streak - prevMilestone) / (nextMilestone - prevMilestone)) * 100))
+    : 100;
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <header>
@@ -67,6 +75,30 @@ function Achievements() {
               <div className="h-full bg-gradient-to-r from-emerald to-purple transition-all" style={{ width: `${xpProgress}%` }} />
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="glass rounded-3xl p-5">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground"><Flame className="size-3.5 text-orange" /> Current streak</div>
+          <div className="font-display text-3xl font-bold mt-1">{streak}<span className="text-sm text-muted-foreground font-normal ml-1">days</span></div>
+          <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>{prevMilestone}d</span><span>{nextMilestone}d</span>
+          </div>
+          <div className="h-2 bg-accent/20 rounded-full overflow-hidden mt-1">
+            <div className="h-full bg-gradient-to-r from-orange to-red transition-all" style={{ width: `${streakPct}%` }} />
+          </div>
+          <div className="text-[11px] text-muted-foreground mt-2">{nextMilestone - streak > 0 ? `${nextMilestone - streak} day${nextMilestone - streak === 1 ? "" : "s"} to next milestone` : "Max milestone reached"}</div>
+        </div>
+        <div className="glass rounded-3xl p-5">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground"><Trophy className="size-3.5 text-emerald" /> Tasks completed</div>
+          <div className="font-display text-3xl font-bold mt-1">{stats?.totalDone ?? 0}</div>
+          <div className="text-[11px] text-muted-foreground mt-2">Lifetime</div>
+        </div>
+        <div className="glass rounded-3xl p-5">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground"><TrendingUp className="size-3.5 text-purple" /> Focus hours</div>
+          <div className="font-display text-3xl font-bold mt-1">{stats?.focusH ?? 0}<span className="text-sm text-muted-foreground font-normal ml-1">h</span></div>
+          <div className="text-[11px] text-muted-foreground mt-2">Lifetime focused work</div>
         </div>
       </div>
 
