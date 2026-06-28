@@ -30,6 +30,7 @@ import { Route as AuthenticatedCoachRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
+import { Route as AuthenticatedHabitsIdRouteImport } from './routes/_authenticated/habits.$id'
 import { Route as ApiPublicCalendarTokenIcsRouteImport } from './routes/api/public/calendar.$token.ics'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -137,6 +138,11 @@ const AuthenticatedAchievementsRoute =
     path: '/achievements',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedHabitsIdRoute = AuthenticatedHabitsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedHabitsRoute,
+} as any)
 const ApiPublicCalendarTokenIcsRoute =
   ApiPublicCalendarTokenIcsRouteImport.update({
     id: '/api/public/calendar/$token/ics',
@@ -157,7 +163,7 @@ export interface FileRoutesByFullPath {
   '/coach': typeof AuthenticatedCoachRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/goals': typeof AuthenticatedGoalsRoute
-  '/habits': typeof AuthenticatedHabitsRoute
+  '/habits': typeof AuthenticatedHabitsRouteWithChildren
   '/monthly': typeof AuthenticatedMonthlyRoute
   '/reminders': typeof AuthenticatedRemindersRoute
   '/schedule': typeof AuthenticatedScheduleRoute
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/tracker': typeof AuthenticatedTrackerRoute
   '/weekly': typeof AuthenticatedWeeklyRoute
   '/yearly': typeof AuthenticatedYearlyRoute
+  '/habits/$id': typeof AuthenticatedHabitsIdRoute
   '/api/public/calendar/$token/ics': typeof ApiPublicCalendarTokenIcsRoute
 }
 export interface FileRoutesByTo {
@@ -180,7 +187,7 @@ export interface FileRoutesByTo {
   '/coach': typeof AuthenticatedCoachRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/goals': typeof AuthenticatedGoalsRoute
-  '/habits': typeof AuthenticatedHabitsRoute
+  '/habits': typeof AuthenticatedHabitsRouteWithChildren
   '/monthly': typeof AuthenticatedMonthlyRoute
   '/reminders': typeof AuthenticatedRemindersRoute
   '/schedule': typeof AuthenticatedScheduleRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/tracker': typeof AuthenticatedTrackerRoute
   '/weekly': typeof AuthenticatedWeeklyRoute
   '/yearly': typeof AuthenticatedYearlyRoute
+  '/habits/$id': typeof AuthenticatedHabitsIdRoute
   '/api/public/calendar/$token/ics': typeof ApiPublicCalendarTokenIcsRoute
 }
 export interface FileRoutesById {
@@ -205,7 +213,7 @@ export interface FileRoutesById {
   '/_authenticated/coach': typeof AuthenticatedCoachRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/goals': typeof AuthenticatedGoalsRoute
-  '/_authenticated/habits': typeof AuthenticatedHabitsRoute
+  '/_authenticated/habits': typeof AuthenticatedHabitsRouteWithChildren
   '/_authenticated/monthly': typeof AuthenticatedMonthlyRoute
   '/_authenticated/reminders': typeof AuthenticatedRemindersRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/_authenticated/tracker': typeof AuthenticatedTrackerRoute
   '/_authenticated/weekly': typeof AuthenticatedWeeklyRoute
   '/_authenticated/yearly': typeof AuthenticatedYearlyRoute
+  '/_authenticated/habits/$id': typeof AuthenticatedHabitsIdRoute
   '/api/public/calendar/$token/ics': typeof ApiPublicCalendarTokenIcsRoute
 }
 export interface FileRouteTypes {
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
     | '/tracker'
     | '/weekly'
     | '/yearly'
+    | '/habits/$id'
     | '/api/public/calendar/$token/ics'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/tracker'
     | '/weekly'
     | '/yearly'
+    | '/habits/$id'
     | '/api/public/calendar/$token/ics'
   id:
     | '__root__'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tracker'
     | '/_authenticated/weekly'
     | '/_authenticated/yearly'
+    | '/_authenticated/habits/$id'
     | '/api/public/calendar/$token/ics'
   fileRoutesById: FileRoutesById
 }
@@ -448,6 +460,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAchievementsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/habits/$id': {
+      id: '/_authenticated/habits/$id'
+      path: '/$id'
+      fullPath: '/habits/$id'
+      preLoaderRoute: typeof AuthenticatedHabitsIdRouteImport
+      parentRoute: typeof AuthenticatedHabitsRoute
+    }
     '/api/public/calendar/$token/ics': {
       id: '/api/public/calendar/$token/ics'
       path: '/api/public/calendar/$token/ics'
@@ -458,6 +477,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedHabitsRouteChildren {
+  AuthenticatedHabitsIdRoute: typeof AuthenticatedHabitsIdRoute
+}
+
+const AuthenticatedHabitsRouteChildren: AuthenticatedHabitsRouteChildren = {
+  AuthenticatedHabitsIdRoute: AuthenticatedHabitsIdRoute,
+}
+
+const AuthenticatedHabitsRouteWithChildren =
+  AuthenticatedHabitsRoute._addFileChildren(AuthenticatedHabitsRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAchievementsRoute: typeof AuthenticatedAchievementsRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
@@ -465,7 +495,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCoachRoute: typeof AuthenticatedCoachRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGoalsRoute: typeof AuthenticatedGoalsRoute
-  AuthenticatedHabitsRoute: typeof AuthenticatedHabitsRoute
+  AuthenticatedHabitsRoute: typeof AuthenticatedHabitsRouteWithChildren
   AuthenticatedMonthlyRoute: typeof AuthenticatedMonthlyRoute
   AuthenticatedRemindersRoute: typeof AuthenticatedRemindersRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
@@ -482,7 +512,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCoachRoute: AuthenticatedCoachRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGoalsRoute: AuthenticatedGoalsRoute,
-  AuthenticatedHabitsRoute: AuthenticatedHabitsRoute,
+  AuthenticatedHabitsRoute: AuthenticatedHabitsRouteWithChildren,
   AuthenticatedMonthlyRoute: AuthenticatedMonthlyRoute,
   AuthenticatedRemindersRoute: AuthenticatedRemindersRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
