@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Wand2, Loader2, Send, User, Bot, RefreshCw, BookmarkPlus, Trash2, ClipboardList, CalendarClock, Target, AlertTriangle, ListChecks, Trophy } from "lucide-react";
+import { Sparkles, Wand2, Loader2, Send, User, Bot, RefreshCw, BookmarkPlus, Trash2, ClipboardList, CalendarClock, Target, AlertTriangle, ListChecks, Trophy, Camera, ImagePlus, X } from "lucide-react";
 import { generateCoachReport, chatWithCoach, generateCoachInsight } from "@/lib/coach.functions";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/coach")({
   component: Coach,
 });
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Msg = { role: "user" | "assistant"; content: string; images?: string[] };
 const STORAGE_KEY = "disciplineos:coach:messages";
 const WELCOME: Msg = {
   role: "assistant",
@@ -54,8 +54,11 @@ function Coach() {
   const [period, setPeriod] = useState<"week" | "month">("week");
   const [messages, setMessages] = useState<Msg[]>(loadMessages);
   const [input, setInput] = useState("");
+  const [pendingImages, setPendingImages] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
   const runReport = useServerFn(generateCoachReport);
   const runChat = useServerFn(chatWithCoach);
@@ -167,11 +170,39 @@ function Coach() {
 
   const send = (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed || busy) return;
-    const next: Msg[] = [...messages, { role: "user", content: trimmed }];
+    if ((!trimmed && pendingImages.length === 0) || busy) return;
+    const userMsg: Msg = {
+      role: "user",
+      content: trimmed || (pendingImages.length ? "What do you see in this image?" : ""),
+      ...(pendingImages.length ? { images: pendingImages } : {}),
+    };
+    const next: Msg[] = [...messages, userMsg];
     setMessages(next);
     setInput("");
+    setPendingImages([]);
     chat.mutate(next);
+  };
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    const arr = Array.from(files).slice(0, 4 - pendingImages.length);
+    for (const file of arr) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("Only images are supported");
+        continue;
+      }
+      if (file.size > 6 * 1024 * 1024) {
+        toast.error(`${file.name} is too large (max 6MB)`);
+        continue;
+      }
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      setPendingImages((p) => (p.length >= 4 ? p : [...p, dataUrl]));
+    }
   };
 
   const handleRegenerate = () => {
@@ -313,7 +344,16 @@ function Coach() {
               </div>
               <div className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${m.role === "user" ? "bg-primary text-primary-foreground whitespace-pre-wrap" : "glass-soft"}`}>
                 {m.role === "user" ? (
-                  m.content
+                  <div className="space-y-2">
+                    {m.images && m.images.length > 0 && (
+                      <div className={`grid gap-1.5 ${m.images.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+                        {m.images.map((src, idx) => (
+                          <img key={idx} src={src} alt="" className="rounded-lg max-h-48 w-full object-cover" />
+                        ))}
+                      </div>
+                    )}
+                    {m.content && <div>{m.content}</div>}
+                  </div>
                 ) : (
                   <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_strong]:text-foreground">
                     <ReactMarkdown>{m.content}</ReactMarkdown>
@@ -343,6 +383,65 @@ function Coach() {
         )}
 
         <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="mt-3 flex gap-2 items-end">
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }}
+          />
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }}
+          />
+          <div className="flex-1 flex flex-col gap-2">
+            {pendingImages.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {pendingImages.map((src, idx) => (
+                  <div key={idx} className="relative group">
+                    <img src={src} alt="" className="size-14 rounded-lg object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setPendingImages((p) => p.filter((_, i) => i !== idx))}
+                      className="absolute -top-1.5 -right-1.5 size-5 grid place-items-center rounded-full bg-background border shadow-sm hover:bg-red/10"
+                      aria-label="Remove image"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2 items-end">
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => cameraInputRef.current?.click()}
+                disabled={busy || pendingImages.length >= 4}
+                title="Take a photo"
+                aria-label="Take a photo"
+                className="glass-soft rounded-2xl size-10 shrink-0"
+              >
+                <Camera className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => galleryInputRef.current?.click()}
+                disabled={busy || pendingImages.length >= 4}
+                title="Choose images"
+                aria-label="Choose images"
+                className="glass-soft rounded-2xl size-10 shrink-0"
+              >
+                <ImagePlus className="size-4" />
+              </Button>
           <textarea
             ref={inputRef}
             autoFocus
@@ -355,12 +454,14 @@ function Coach() {
               }
             }}
             rows={1}
-            placeholder="Ask your coach anything…"
+            placeholder={pendingImages.length ? "Add a question about your image…" : "Ask your coach anything…"}
             className="flex-1 resize-none glass-soft rounded-2xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald/40 max-h-32"
           />
-          <Button type="submit" size="icon" disabled={busy || !input.trim()} className="bg-emerald hover:bg-emerald/90 text-emerald-foreground rounded-2xl size-10 shrink-0">
+          <Button type="submit" size="icon" disabled={busy || (!input.trim() && pendingImages.length === 0)} className="bg-emerald hover:bg-emerald/90 text-emerald-foreground rounded-2xl size-10 shrink-0">
             <Send className="size-4" />
           </Button>
+            </div>
+          </div>
         </form>
       </div>
 
