@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
+import { OnboardingDialog } from "@/components/OnboardingDialog";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -12,6 +13,12 @@ export const Route = createFileRoute("/_authenticated")({
   component: () => (
     <AppShell>
       <Outlet />
+      <OnboardingMount />
     </AppShell>
   ),
 });
+
+function OnboardingMount() {
+  const { user } = Route.useRouteContext();
+  return <OnboardingDialog userId={user.id} email={user.email ?? ""} />;
+}
