@@ -86,14 +86,14 @@ function Schedule() {
           <h1 className="font-display text-3xl font-bold">Schedule</h1>
           <p className="text-sm text-muted-foreground">Plan and conquer your day.</p>
         </div>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm" />
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="bg-accent/10 border border-border rounded-xl px-3 py-2 text-sm" />
       </header>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button className="w-full h-12 bg-emerald hover:bg-emerald/90 text-emerald-foreground font-semibold"><Plus className="size-4" /> Add task</Button>
         </DialogTrigger>
-        <DialogContent className="glass border-white/10">
+        <DialogContent className="glass border-border">
           <DialogHeader><DialogTitle className="font-display">New task</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Deep work — Project X" /></div>
@@ -136,8 +136,8 @@ function Schedule() {
               <div className={`font-medium ${t.status === "completed" ? "line-through text-muted-foreground" : ""}`}>{t.title}</div>
               <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
                 {t.start_time && <span>{formatTime(t.start_time)}{t.end_time ? `–${formatTime(t.end_time)}` : ""}</span>}
-                <span className="px-1.5 py-0.5 rounded bg-white/5">{t.category.replace("_", " ")}</span>
-                <span className={`px-1.5 py-0.5 rounded ${t.priority === "critical" ? "bg-destructive/15 text-destructive" : t.priority === "high" ? "bg-orange/15 text-orange" : "bg-white/5"}`}>{t.priority}</span>
+                <span className="px-1.5 py-0.5 rounded bg-accent/10">{t.category.replace("_", " ")}</span>
+                <span className={`px-1.5 py-0.5 rounded ${t.priority === "critical" ? "bg-destructive/15 text-destructive" : t.priority === "high" ? "bg-orange/15 text-orange" : "bg-accent/10"}`}>{t.priority}</span>
               </div>
               {t.notes && <div className="text-xs text-muted-foreground mt-1">{t.notes}</div>}
             </div>

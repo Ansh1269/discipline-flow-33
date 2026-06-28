@@ -1,8 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, TrendingUp, AlertCircle, Trophy } from "lucide-react";
+import { Sparkles, TrendingUp, AlertCircle, Trophy, Wand2, Loader2 } from "lucide-react";
 import { todayISO } from "@/lib/date";
+import { generateCoachReport } from "@/lib/coach.functions";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/coach")({
   head: () => ({ meta: [{ title: "AI Coach — DisciplineOS" }] }),
@@ -10,6 +15,18 @@ export const Route = createFileRoute("/_authenticated/coach")({
 });
 
 function Coach() {
+  const [aiReport, setAiReport] = useState<string | null>(null);
+  const [period, setPeriod] = useState<"week" | "month">("week");
+  const runReport = useServerFn(generateCoachReport);
+  const ai = useMutation({
+    mutationFn: async (p: "week" | "month") => runReport({ data: { period: p } }),
+    onSuccess: (res) => {
+      setAiReport(res.message);
+      if (!res.ok) toast.error(res.message);
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "AI request failed"),
+  });
+
   const { data: stats } = useQuery({
     queryKey: ["coach-stats"],
     queryFn: async () => {
@@ -36,8 +53,26 @@ function Coach() {
         </div>
       </header>
 
+      <div className="glass rounded-3xl p-5">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h2 className="font-display font-semibold flex items-center gap-2"><Wand2 className="size-4 text-emerald" /> AI-generated report</h2>
+          <div className="flex gap-1 text-xs">
+            <button onClick={() => setPeriod("week")} className={`px-2.5 py-1 rounded-lg ${period === "week" ? "bg-emerald/15 text-emerald" : "text-muted-foreground"}`}>Week</button>
+            <button onClick={() => setPeriod("month")} className={`px-2.5 py-1 rounded-lg ${period === "month" ? "bg-emerald/15 text-emerald" : "text-muted-foreground"}`}>Month</button>
+          </div>
+        </div>
+        {aiReport ? (
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">{aiReport}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">Generate a personalized report from your real activity.</p>
+        )}
+        <Button onClick={() => ai.mutate(period)} disabled={ai.isPending} className="mt-4 bg-emerald hover:bg-emerald/90 text-emerald-foreground">
+          {ai.isPending ? <><Loader2 className="size-4 animate-spin" /> Thinking…</> : <><Sparkles className="size-4" /> Generate {period === "week" ? "weekly" : "monthly"} report</>}
+        </Button>
+      </div>
+
       <div className="glass rounded-3xl p-6">
-        <h2 className="font-display font-semibold mb-3">Weekly summary</h2>
+        <h2 className="font-display font-semibold mb-3">Quick read</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">{insights.summary}</p>
       </div>
 
