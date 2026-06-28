@@ -2,11 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Wand2, Loader2, Send, User, Bot, RefreshCw, BookmarkPlus, Trash2, ClipboardList } from "lucide-react";
-import { generateCoachReport, chatWithCoach } from "@/lib/coach.functions";
+import { Sparkles, Wand2, Loader2, Send, User, Bot, RefreshCw, BookmarkPlus, Trash2, ClipboardList, CalendarClock, Target, AlertTriangle, ListChecks, Trophy } from "lucide-react";
+import { generateCoachReport, chatWithCoach, generateCoachInsight } from "@/lib/coach.functions";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 export const Route = createFileRoute("/_authenticated/coach")({
   head: () => ({ meta: [{ title: "AI Coach — DisciplineOS" }] }),
@@ -25,6 +26,15 @@ const SUGGESTIONS = [
   "What habit should I focus on?",
   "Plan my ideal tomorrow",
   "Where am I slipping?",
+];
+
+type InsightKind = "schedule" | "habits" | "weak_areas" | "weekly_plan" | "celebrate";
+const INSIGHTS: { kind: InsightKind; label: string; icon: typeof CalendarClock; tone: string }[] = [
+  { kind: "schedule", label: "Plan tomorrow", icon: CalendarClock, tone: "text-emerald bg-emerald/15" },
+  { kind: "habits", label: "Recommend habits", icon: Target, tone: "text-purple bg-purple/15" },
+  { kind: "weak_areas", label: "Weak areas", icon: AlertTriangle, tone: "text-orange bg-orange/15" },
+  { kind: "weekly_plan", label: "Weekly plan", icon: ListChecks, tone: "text-primary bg-primary/15" },
+  { kind: "celebrate", label: "Celebrate wins", icon: Trophy, tone: "text-emerald bg-emerald/15" },
 ];
 
 function loadMessages(): Msg[] {
@@ -49,6 +59,8 @@ function Coach() {
   const qc = useQueryClient();
   const runReport = useServerFn(generateCoachReport);
   const runChat = useServerFn(chatWithCoach);
+  const runInsight = useServerFn(generateCoachInsight);
+  const [insight, setInsight] = useState<{ kind: InsightKind; content: string } | null>(null);
 
   useEffect(() => {
     try {
@@ -128,6 +140,21 @@ function Coach() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["action-plans"] }),
   });
 
+  const insightMut = useMutation({
+    mutationFn: async (kind: InsightKind) => {
+      const res = await runInsight({ data: { kind } });
+      return { kind, res };
+    },
+    onSuccess: ({ kind, res }) => {
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      setInsight({ kind, content: res.message });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Insight failed"),
+  });
+
   const busy = chat.isPending || regenerate.isPending;
 
   useEffect(() => {
@@ -169,6 +196,7 @@ function Coach() {
 
   const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant" && m.content !== WELCOME.content);
   const userMsgCount = messages.filter((m) => m.role === "user").length;
+  const activeInsight = INSIGHTS.find((i) => i.kind === insight?.kind);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -181,6 +209,69 @@ function Coach() {
           </div>
         </div>
       </header>
+
+      <section className="glass rounded-3xl p-5 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-display font-semibold flex items-center gap-2">
+            <Wand2 className="size-4 text-emerald" /> Personalized insights
+          </h2>
+          {insightMut.isPending && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Loader2 className="size-3.5 animate-spin" /> Generating…
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {INSIGHTS.map((i) => {
+            const Icon = i.icon;
+            const active = insight?.kind === i.kind;
+            return (
+              <button
+                key={i.kind}
+                onClick={() => insightMut.mutate(i.kind)}
+                disabled={insightMut.isPending}
+                className={`flex items-center gap-2 text-sm px-3 py-2 rounded-2xl glass-soft transition hover:-translate-y-0.5 disabled:opacity-50 ${active ? "ring-2 ring-emerald/40" : ""}`}
+              >
+                <span className={`size-7 rounded-lg grid place-items-center ${i.tone}`}>
+                  <Icon className="size-3.5" />
+                </span>
+                {i.label}
+              </button>
+            );
+          })}
+        </div>
+        {insight && activeInsight && (
+          <div className="glass-soft rounded-2xl p-4 animate-in fade-in slide-in-from-bottom-1 duration-300">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <activeInsight.icon className="size-4" /> {activeInsight.label}
+              </div>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => insightMut.mutate(insight.kind)}
+                  disabled={insightMut.isPending}
+                  className="text-xs px-2.5 py-1.5 rounded-lg hover:bg-emerald/10 flex items-center gap-1.5 disabled:opacity-40"
+                >
+                  <RefreshCw className={`size-3.5 ${insightMut.isPending ? "animate-spin" : ""}`} /> Regenerate
+                </button>
+                <button
+                  onClick={() => savePlan.mutate(`${activeInsight.label}\n\n${insight.content}`)}
+                  disabled={savePlan.isPending}
+                  className="text-xs px-2.5 py-1.5 rounded-lg hover:bg-purple/10 flex items-center gap-1.5 disabled:opacity-40"
+                >
+                  <BookmarkPlus className="size-3.5" /> Save
+                </button>
+              </div>
+            </div>
+            <div className="prose prose-sm prose-invert max-w-none text-sm leading-relaxed [&_ul]:my-2 [&_ol]:my-2 [&_p]:my-2 [&_strong]:text-foreground">
+              <ReactMarkdown>{insight.content}</ReactMarkdown>
+            </div>
+          </div>
+        )}
+        {!insight && !insightMut.isPending && (
+          <p className="text-xs text-muted-foreground">Tap a card to get a tailored insight grounded in your last 2–3 weeks of data.</p>
+        )}
+      </section>
 
       <div className="glass rounded-3xl p-4 flex flex-col" style={{ height: "min(70vh, 600px)" }}>
         <div className="flex items-center justify-between gap-2 mb-3 pb-3 border-b border-border/50">
@@ -220,8 +311,14 @@ function Coach() {
               <div className={`size-8 shrink-0 rounded-xl grid place-items-center ${m.role === "user" ? "bg-purple/15 text-purple" : "bg-emerald/15 text-emerald"}`}>
                 {m.role === "user" ? <User className="size-4" /> : <Bot className="size-4" />}
               </div>
-              <div className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${m.role === "user" ? "bg-primary text-primary-foreground" : "glass-soft"}`}>
-                {m.content}
+              <div className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${m.role === "user" ? "bg-primary text-primary-foreground whitespace-pre-wrap" : "glass-soft"}`}>
+                {m.role === "user" ? (
+                  m.content
+                ) : (
+                  <div className="prose prose-sm prose-invert max-w-none [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_strong]:text-foreground">
+                    <ReactMarkdown>{m.content}</ReactMarkdown>
+                  </div>
+                )}
               </div>
             </div>
           ))}

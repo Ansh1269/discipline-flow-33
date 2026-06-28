@@ -83,3 +83,34 @@ export const chatWithCoach = createServerFn({ method: "POST" })
     const sys = `${SYSTEM}\n\nUser's last 14 days of stats (JSON, for grounding — do not dump verbatim):\n${JSON.stringify(stats)}`;
     return await callGateway([{ role: "system", content: sys }, ...data.messages]);
   });
+
+const INSIGHT_KINDS = ["schedule", "habits", "weak_areas", "weekly_plan", "celebrate"] as const;
+type InsightKind = (typeof INSIGHT_KINDS)[number];
+
+const INSIGHT_PROMPTS: Record<InsightKind, string> = {
+  schedule: `Design an ideal time-blocked schedule for TOMORROW based on the user's recent patterns.
+Format strictly as a markdown list, one block per line:
+- HH:MM–HH:MM • Category — short description
+Cover wake-up through wind-down. Be realistic (use their actual best categories and avoid times they routinely miss). End with one short sentence on why this version is better than last week.`,
+  habits: `Recommend 2–3 high-leverage habits to add or double down on, given the data.
+For each: **Habit name** — why it fits this user (1 sentence) — suggested cadence (per week) — best time of day. Avoid habits they already do well.`,
+  weak_areas: `Identify the user's 2–3 weakest areas (categories, times of day, or habits) with specific numbers, then for each give one concrete fix to try this week. Be honest, not harsh.`,
+  weekly_plan: `Write a one-week improvement plan with a clear theme and 3 daily focuses (Mon–Sun). Keep each day to one line. End with a success metric to check next Sunday.`,
+  celebrate: `Celebrate the user's wins from the last 14 days. Call out specific streaks, categories, focus hours, or comebacks with numbers. Keep it warm and energetic, 3–5 short sentences.`,
+};
+
+export const generateCoachInsight = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ kind: z.enum(INSIGHT_KINDS) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const days = data.kind === "weekly_plan" || data.kind === "celebrate" ? 14 : 21;
+    const stats = await loadStats(context.supabase, days);
+    const res = await callGateway([
+      { role: "system", content: SYSTEM },
+      {
+        role: "user",
+        content: `My last ${days} days as JSON:\n${JSON.stringify(stats)}\n\n${INSIGHT_PROMPTS[data.kind]}`,
+      },
+    ]);
+    return { ...res, kind: data.kind, stats };
+  });
