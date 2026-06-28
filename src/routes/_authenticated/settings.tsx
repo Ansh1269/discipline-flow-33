@@ -60,6 +60,14 @@ function Settings() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["settings", user.id] }),
   });
 
+  const saveProfilePrivacy = useMutation({
+    mutationFn: async (patch: { show_streaks?: boolean; show_xp?: boolean; show_focus?: boolean; show_achievements?: boolean }) => {
+      const { error } = await supabase.from("profiles").update(patch as never).eq("id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["profile", user.id] }); qc.invalidateQueries({ queryKey: ["profile-page"] }); toast.success("Privacy updated"); },
+  });
+
   async function signOut() {
     await qc.cancelQueries(); qc.clear();
     await supabase.auth.signOut();
@@ -336,6 +344,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="flex items-center justify-between"><span className="text-sm">{label}</span>{children}</div>;
+}
+
+function PrivacyRow({ label, description, value, onChange }: { label: string; description: string; value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{label}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      <Switch checked={value} onCheckedChange={onChange} />
+    </div>
+  );
 }
 
 type DeviceKind = "ios" | "android" | "windows" | "mac" | "linux" | "other";
