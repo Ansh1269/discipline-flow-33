@@ -201,11 +201,15 @@ export type Database = {
           color: string
           created_at: string
           current_streak: number
+          difficulty: Database["public"]["Enums"]["habit_difficulty"]
           icon: string
           id: string
           longest_streak: number
           name: string
+          notes: string | null
+          reminder_time: string | null
           target_per_day: number
+          target_per_week: number
           updated_at: string
           user_id: string
         }
@@ -214,11 +218,15 @@ export type Database = {
           color?: string
           created_at?: string
           current_streak?: number
+          difficulty?: Database["public"]["Enums"]["habit_difficulty"]
           icon?: string
           id?: string
           longest_streak?: number
           name: string
+          notes?: string | null
+          reminder_time?: string | null
           target_per_day?: number
+          target_per_week?: number
           updated_at?: string
           user_id: string
         }
@@ -227,11 +235,15 @@ export type Database = {
           color?: string
           created_at?: string
           current_streak?: number
+          difficulty?: Database["public"]["Enums"]["habit_difficulty"]
           icon?: string
           id?: string
           longest_streak?: number
           name?: string
+          notes?: string | null
+          reminder_time?: string | null
           target_per_day?: number
+          target_per_week?: number
           updated_at?: string
           user_id?: string
         }
@@ -432,6 +444,7 @@ export type Database = {
     }
     Enums: {
       goal_period: "daily" | "weekly" | "monthly" | "yearly"
+      habit_difficulty: "easy" | "medium" | "hard"
       task_category:
         | "morning_routine"
         | "workout"
@@ -576,6 +589,7 @@ export const Constants = {
   public: {
     Enums: {
       goal_period: ["daily", "weekly", "monthly", "yearly"],
+      habit_difficulty: ["easy", "medium", "hard"],
       task_category: [
         "morning_routine",
         "workout",
