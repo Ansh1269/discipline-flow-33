@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
@@ -37,12 +38,15 @@ function Settings() {
 
   const [name, setName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [bio, setBio] = useState("");
   useEffect(() => { if (profile?.display_name) setName(profile.display_name); }, [profile?.display_name]);
   useEffect(() => { setAvatarUrl(profile?.avatar_url ?? ""); }, [profile?.avatar_url]);
+  useEffect(() => { setBio((profile as { bio?: string | null } | null)?.bio ?? ""); }, [profile]);
 
   const saveProfile = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("profiles").update({ display_name: name, avatar_url: avatarUrl || null }).eq("id", user.id);
+      const trimmedBio = bio.trim().slice(0, 500);
+      const { error } = await supabase.from("profiles").update({ display_name: name, avatar_url: avatarUrl || null, bio: trimmedBio || null }).eq("id", user.id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["profile", user.id] }); toast.success("Profile updated"); },
@@ -170,10 +174,23 @@ function Settings() {
             <div className="min-w-0 flex-1">
               <p className="font-medium truncate">{name || "Your name"}</p>
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              {bio.trim() && <p className="text-sm text-muted-foreground mt-1 line-clamp-3 whitespace-pre-wrap">{bio}</p>}
             </div>
           </div>
           <div><Label htmlFor="settings-name">Display name</Label><Input id="settings-name" value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label htmlFor="settings-avatar">Avatar URL</Label><Input id="settings-avatar" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://…" /></div>
+          <div>
+            <Label htmlFor="settings-bio">Bio</Label>
+            <Textarea
+              id="settings-bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value.slice(0, 500))}
+              placeholder="A short line about your goals, focus, or what you're working on."
+              rows={3}
+              maxLength={500}
+            />
+            <p className="mt-1 text-xs text-muted-foreground text-right" aria-live="polite">{bio.length}/500</p>
+          </div>
           <div><Label htmlFor="settings-email">Email</Label><Input id="settings-email" value={user.email ?? ""} disabled /></div>
           <Button onClick={() => saveProfile.mutate()} disabled={saveProfile.isPending} className="bg-emerald hover:bg-emerald/90 text-emerald-foreground">Save profile</Button>
         </div>
