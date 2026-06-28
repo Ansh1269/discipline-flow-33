@@ -83,6 +83,8 @@
   --purple: oklch(0.62 0.19 295);
   --glass: oklch(1 0 0 / 65%);
   --glass-border: oklch(0.18 0.04 260 / 10%);
+  --glass-soft: oklch(1 0 0 / 50%);
+  --glass-soft-border: oklch(0.18 0.04 260 / 8%);
   --chart-1: oklch(0.66 0.17 158);
   --chart-2: oklch(0.62 0.19 295);
   --chart-3: oklch(0.72 0.18 55);
@@ -125,6 +127,8 @@
   --purple: oklch(0.7 0.19 295);
   --glass: oklch(0.25 0.04 260 / 55%);
   --glass-border: oklch(1 0 0 / 8%);
+  --glass-soft: oklch(0.22 0.04 260 / 40%);
+  --glass-soft-border: oklch(1 0 0 / 6%);
   --chart-1: oklch(0.72 0.16 158);
   --chart-2: oklch(0.7 0.19 295);
   --chart-3: oklch(0.75 0.18 55);
@@ -185,8 +189,8 @@
 }
 
 @utility glass-soft {
-  background: oklch(0.22 0.04 260 / 40%);
-  border: 1px solid oklch(1 0 0 / 6%);
+  background: var(--glass-soft);
+  border: 1px solid var(--glass-soft-border);
   backdrop-filter: blur(16px);
 }
 

@@ -98,7 +98,7 @@ function Habits() {
         <DialogTrigger asChild>
           <Button className="w-full h-12 bg-emerald hover:bg-emerald/90 text-emerald-foreground font-semibold"><Plus className="size-4" /> New habit</Button>
         </DialogTrigger>
-        <DialogContent className="glass border-white/10">
+        <DialogContent className="glass border-border">
           <DialogHeader><DialogTitle className="font-display">New habit</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Drink 2L water" /></div>
