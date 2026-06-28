@@ -55,6 +55,7 @@ function Coach() {
   const [messages, setMessages] = useState<Msg[]>(loadMessages);
   const [input, setInput] = useState("");
   const [pendingImages, setPendingImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState<{ name: string; progress: number }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -185,24 +186,51 @@ function Coach() {
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
-    const arr = Array.from(files).slice(0, 4 - pendingImages.length);
+    const remaining = 4 - pendingImages.length;
+    if (remaining <= 0) {
+      toast.error("You can attach up to 4 images per message");
+      return;
+    }
+    const incoming = Array.from(files);
+    if (incoming.length > remaining) {
+      toast.message(`Only adding the first ${remaining} — limit is 4 images`);
+    }
+    const arr = incoming.slice(0, remaining);
+    let added = 0;
     for (const file of arr) {
       if (!file.type.startsWith("image/")) {
-        toast.error("Only images are supported");
+        toast.error(`${file.name} isn't an image — only JPG, PNG, HEIC and WebP work here`);
         continue;
       }
       if (file.size > 6 * 1024 * 1024) {
-        toast.error(`${file.name} is too large (max 6MB)`);
+        const mb = (file.size / (1024 * 1024)).toFixed(1);
+        toast.error(`${file.name} is ${mb} MB — please pick something under 6 MB`);
         continue;
       }
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      setPendingImages((p) => (p.length >= 4 ? p : [...p, dataUrl]));
+      const entry = { name: file.name, progress: 0 };
+      setUploading((u) => [...u, entry]);
+      try {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onprogress = (ev) => {
+            if (!ev.lengthComputable) return;
+            const pct = Math.round((ev.loaded / ev.total) * 100);
+            setUploading((u) => u.map((it) => (it.name === file.name ? { ...it, progress: pct } : it)));
+          };
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error("Couldn't read this file — it may be corrupted"));
+          reader.onabort = () => reject(new Error("Upload cancelled"));
+          reader.readAsDataURL(file);
+        });
+        setPendingImages((p) => (p.length >= 4 ? p : [...p, dataUrl]));
+        added += 1;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : `Failed to attach ${file.name}`);
+      } finally {
+        setUploading((u) => u.filter((it) => it.name !== file.name));
+      }
     }
+    if (added > 0) toast.success(added === 1 ? "Image attached" : `${added} images attached`);
   };
 
   const handleRegenerate = () => {
@@ -400,21 +428,46 @@ function Coach() {
             onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }}
           />
           <div className="flex-1 flex flex-col gap-2">
-            {pendingImages.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+            {(pendingImages.length > 0 || uploading.length > 0) && (
+              <div className="flex flex-wrap gap-2 items-end">
                 {pendingImages.map((src, idx) => (
-                  <div key={idx} className="relative group">
+                  <div key={idx} className={`relative group ${chat.isPending ? "opacity-60" : ""}`}>
                     <img src={src} alt="" className="size-14 rounded-lg object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setPendingImages((p) => p.filter((_, i) => i !== idx))}
-                      className="absolute -top-1.5 -right-1.5 size-5 grid place-items-center rounded-full bg-background border shadow-sm hover:bg-red/10"
-                      aria-label="Remove image"
-                    >
-                      <X className="size-3" />
-                    </button>
+                    {chat.isPending && (
+                      <div className="absolute inset-0 grid place-items-center rounded-lg bg-background/60">
+                        <Loader2 className="size-4 animate-spin text-emerald" />
+                      </div>
+                    )}
+                    {!chat.isPending && (
+                      <button
+                        type="button"
+                        onClick={() => setPendingImages((p) => p.filter((_, i) => i !== idx))}
+                        className="absolute -top-1.5 -right-1.5 size-5 grid place-items-center rounded-full bg-background border shadow-sm hover:bg-red/10"
+                        aria-label="Remove image"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    )}
                   </div>
                 ))}
+                {uploading.map((u) => (
+                  <div key={u.name} className="size-14 rounded-lg glass-soft border border-border/40 flex flex-col items-center justify-center gap-1 px-1" title={`Uploading ${u.name}`}>
+                    <Loader2 className="size-3.5 animate-spin text-emerald" />
+                    <div className="w-10 h-1 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full bg-emerald transition-all" style={{ width: `${u.progress}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {chat.isPending && pendingImages.length > 0 && (
+              <div className="text-[11px] text-muted-foreground flex items-center gap-1.5" role="status" aria-live="polite">
+                <Loader2 className="size-3 animate-spin" /> Sending {pendingImages.length === 1 ? "image" : `${pendingImages.length} images`} to coach…
+              </div>
+            )}
+            {uploading.length > 0 && (
+              <div className="text-[11px] text-muted-foreground" role="status" aria-live="polite">
+                Preparing {uploading.length === 1 ? "image" : `${uploading.length} images`}…
               </div>
             )}
             <div className="flex gap-2 items-end">
