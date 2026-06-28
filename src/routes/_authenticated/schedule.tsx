@@ -10,8 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { TaskDialog } from "@/components/TaskDialog";
 
 export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({ meta: [{ title: "Schedule — DisciplineOS" }] }),
@@ -25,12 +29,13 @@ function Schedule() {
   const qc = useQueryClient();
   const [date, setDate] = useState(todayISO());
   const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ title: "", notes: "", category: "other" as typeof CATEGORIES[number], priority: "medium" as typeof PRIORITIES[number], start_time: "", end_time: "" });
 
   const { data: tasks = [] } = useQuery({
     queryKey: ["tasks", date],
     queryFn: async () => {
-      const { data } = await supabase.from("tasks").select("*").eq("scheduled_date", date).order("start_time", { ascending: true, nullsFirst: false });
+      const { data } = await supabase.from("tasks").select("*").eq("scheduled_date", date).order("position", { ascending: true, nullsFirst: false }).order("start_time", { ascending: true, nullsFirst: false });
       return data ?? [];
     },
   });
@@ -78,6 +83,25 @@ function Schedule() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks", date] }),
   });
+
+  const reorder = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id, i) => supabase.from("tasks").update({ position: i }).eq("id", id)));
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks", date] }),
+  });
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+  function onDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const ids = tasks.map((t) => t.id);
+    const next = arrayMove(ids, ids.indexOf(String(active.id)), ids.indexOf(String(over.id)));
+    qc.setQueryData(["tasks", date], arrayMove(tasks.slice(), ids.indexOf(String(active.id)), ids.indexOf(String(over.id))));
+    reorder.mutate(next);
+  }
+
+  const editingTask = tasks.find((t) => t.id === editId) ?? null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -127,26 +151,37 @@ function Schedule() {
 
       <div className="space-y-2">
         {tasks.length === 0 && <p className="text-center text-muted-foreground py-12">No tasks for this day yet.</p>}
-        {tasks.map((t) => (
-          <div key={t.id} className="glass-soft rounded-2xl p-4 flex items-center gap-3 group">
-            <button onClick={() => toggle.mutate({ id: t.id, status: t.status })}>
-              <StatusDot status={t.status as never} />
-            </button>
-            <div className="flex-1 min-w-0">
-              <div className={`font-medium ${t.status === "completed" ? "line-through text-muted-foreground" : ""}`}>{t.title}</div>
-              <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
-                {t.start_time && <span>{formatTime(t.start_time)}{t.end_time ? `–${formatTime(t.end_time)}` : ""}</span>}
-                <span className="px-1.5 py-0.5 rounded bg-accent/10">{t.category.replace("_", " ")}</span>
-                <span className={`px-1.5 py-0.5 rounded ${t.priority === "critical" ? "bg-destructive/15 text-destructive" : t.priority === "high" ? "bg-orange/15 text-orange" : "bg-accent/10"}`}>{t.priority}</span>
-              </div>
-              {t.notes && <div className="text-xs text-muted-foreground mt-1">{t.notes}</div>}
-            </div>
-            <button onClick={() => remove.mutate(t.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition">
-              <Trash2 className="size-4" />
-            </button>
-          </div>
-        ))}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+            {tasks.map((t) => (
+              <SortableRow key={t.id} task={t} onToggle={() => toggle.mutate({ id: t.id, status: t.status })} onRemove={() => remove.mutate(t.id)} onEdit={() => setEditId(t.id)} />
+            ))}
+          </SortableContext>
+        </DndContext>
       </div>
+
+      <TaskDialog open={!!editId} onOpenChange={(v) => !v && setEditId(null)} task={editingTask as never} dateKey={date} />
+    </div>
+  );
+}
+
+function SortableRow({ task, onToggle, onRemove, onEdit }: { task: { id: string; title: string; status: string; start_time: string | null; end_time: string | null; category: string; priority: string; notes: string | null }; onToggle: () => void; onRemove: () => void; onEdit: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
+  return (
+    <div ref={setNodeRef} style={style} className="glass-soft rounded-2xl p-4 flex items-center gap-3 group">
+      <button {...attributes} {...listeners} className="touch-none text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing" aria-label="Drag"><GripVertical className="size-4" /></button>
+      <button onClick={onToggle}><StatusDot status={task.status as never} /></button>
+      <button onClick={onEdit} className="flex-1 min-w-0 text-left">
+        <div className={`font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}>{task.title}</div>
+        <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+          {task.start_time && <span>{formatTime(task.start_time)}{task.end_time ? `–${formatTime(task.end_time)}` : ""}</span>}
+          <span className="px-1.5 py-0.5 rounded bg-accent/10">{task.category.replace("_", " ")}</span>
+          <span className={`px-1.5 py-0.5 rounded ${task.priority === "critical" ? "bg-destructive/15 text-destructive" : task.priority === "high" ? "bg-orange/15 text-orange" : "bg-accent/10"}`}>{task.priority}</span>
+        </div>
+        {task.notes && <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.notes}</div>}
+      </button>
+      <button onClick={onRemove} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition"><Trash2 className="size-4" /></button>
     </div>
   );
 }
