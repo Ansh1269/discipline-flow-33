@@ -149,7 +149,7 @@ function AuthPage() {
           By continuing you agree to our <Link to="/auth" className="underline">Terms</Link>.
         </p>
       </div>
-    </div>
+    </main>
   );
 }
 
