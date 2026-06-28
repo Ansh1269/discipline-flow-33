@@ -23,7 +23,6 @@ import { Route as AuthenticatedMonthlyRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedHabitsRouteImport } from './routes/_authenticated/habits'
 import { Route as AuthenticatedGoalsRouteImport } from './routes/_authenticated/goals'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCoachRouteImport } from './routes/_authenticated/coach'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
@@ -98,11 +97,6 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCoachRoute = AuthenticatedCoachRouteImport.update({
-  id: '/coach',
-  path: '/coach',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
@@ -133,7 +127,6 @@ export interface FileRoutesByFullPath {
   '/achievements': typeof AuthenticatedAchievementsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/calendar': typeof AuthenticatedCalendarRoute
-  '/coach': typeof AuthenticatedCoachRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/goals': typeof AuthenticatedGoalsRoute
   '/habits': typeof AuthenticatedHabitsRoute
@@ -153,7 +146,6 @@ export interface FileRoutesByTo {
   '/achievements': typeof AuthenticatedAchievementsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/calendar': typeof AuthenticatedCalendarRoute
-  '/coach': typeof AuthenticatedCoachRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/goals': typeof AuthenticatedGoalsRoute
   '/habits': typeof AuthenticatedHabitsRoute
@@ -175,7 +167,6 @@ export interface FileRoutesById {
   '/_authenticated/achievements': typeof AuthenticatedAchievementsRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
-  '/_authenticated/coach': typeof AuthenticatedCoachRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/goals': typeof AuthenticatedGoalsRoute
   '/_authenticated/habits': typeof AuthenticatedHabitsRoute
@@ -197,7 +188,6 @@ export interface FileRouteTypes {
     | '/achievements'
     | '/analytics'
     | '/calendar'
-    | '/coach'
     | '/dashboard'
     | '/goals'
     | '/habits'
@@ -217,7 +207,6 @@ export interface FileRouteTypes {
     | '/achievements'
     | '/analytics'
     | '/calendar'
-    | '/coach'
     | '/dashboard'
     | '/goals'
     | '/habits'
@@ -238,7 +227,6 @@ export interface FileRouteTypes {
     | '/_authenticated/achievements'
     | '/_authenticated/analytics'
     | '/_authenticated/calendar'
-    | '/_authenticated/coach'
     | '/_authenticated/dashboard'
     | '/_authenticated/goals'
     | '/_authenticated/habits'
@@ -360,13 +348,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/coach': {
-      id: '/_authenticated/coach'
-      path: '/coach'
-      fullPath: '/coach'
-      preLoaderRoute: typeof AuthenticatedCoachRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/calendar': {
       id: '/_authenticated/calendar'
       path: '/calendar'
@@ -402,7 +383,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAchievementsRoute: typeof AuthenticatedAchievementsRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
-  AuthenticatedCoachRoute: typeof AuthenticatedCoachRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGoalsRoute: typeof AuthenticatedGoalsRoute
   AuthenticatedHabitsRoute: typeof AuthenticatedHabitsRoute
@@ -419,7 +399,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAchievementsRoute: AuthenticatedAchievementsRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
-  AuthenticatedCoachRoute: AuthenticatedCoachRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGoalsRoute: AuthenticatedGoalsRoute,
   AuthenticatedHabitsRoute: AuthenticatedHabitsRoute,
