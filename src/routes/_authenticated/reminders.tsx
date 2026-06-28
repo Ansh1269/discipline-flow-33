@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Bell, Plus, Trash2, Droplet, Dumbbell, Moon, BookOpen, Pill, Calendar, Briefcase } from "lucide-react";
 import { toast } from "sonner";
+import { enablePushNotifications } from "@/lib/reminder-scheduler";
 
 export const Route = createFileRoute("/_authenticated/reminders")({
   head: () => ({ meta: [{ title: "Reminders — DisciplineOS" }] }),
@@ -73,10 +74,10 @@ function Reminders() {
   });
 
   async function requestPush() {
-    if (!("Notification" in window)) return toast.error("Notifications not supported");
-    const perm = await Notification.requestPermission();
-    if (perm === "granted") toast.success("Push notifications enabled");
-    else toast.error("Permission denied");
+    const r = await enablePushNotifications();
+    if (r === "granted") toast.success("Push notifications enabled — reminders will fire even with the tab in the background.");
+    else if (r === "denied") toast.error("Permission denied. Allow notifications in your browser.");
+    else toast.error("This browser doesn't support notifications");
   }
 
   return (

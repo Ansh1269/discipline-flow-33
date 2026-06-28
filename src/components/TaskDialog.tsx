@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { Plus, X, Paperclip, Mic, Square, Link2, FileText, Image as ImageIcon, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -96,7 +96,7 @@ export function TaskDialog({ open, onOpenChange, task, dateKey }: { open: boolea
         <div className="space-y-5">
           <div>
             <Label>Notes</Label>
-            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add context, plans, reflections…" />
+            <RichTextEditor value={notes} onChange={setNotes} placeholder="Add context, plans, reflections…" />
           </div>
 
           <div>

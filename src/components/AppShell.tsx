@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useTheme } from "@/hooks/useTheme";
+import { useReminderScheduler } from "@/lib/reminder-scheduler";
 
 const NAV = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
@@ -30,6 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { theme, toggle } = useTheme();
+  useReminderScheduler();
 
   async function signOut() {
     await qc.cancelQueries();

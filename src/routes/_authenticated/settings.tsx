@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut, FileJson, FileSpreadsheet, FileText, Sun, Moon } from "lucide-react";
+import { LogOut, FileJson, FileSpreadsheet, FileText, Sun, Moon, Bell, Copy, CalendarSearch } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { downloadCsv, downloadJson, downloadXlsx, downloadPdfReport } from "@/lib/export";
+import { enablePushNotifications } from "@/lib/reminder-scheduler";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — DisciplineOS" }] }),
@@ -56,6 +57,20 @@ function Settings() {
     await qc.cancelQueries(); qc.clear();
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
+  }
+
+  async function enablePush() {
+    const r = await enablePushNotifications();
+    if (r === "granted") toast.success("Push notifications enabled");
+    else if (r === "denied") toast.error("Permission denied. Allow notifications in your browser settings.");
+    else toast.error("This browser doesn't support notifications");
+  }
+
+  const icsToken = (profile as { ics_token?: string } | null)?.ics_token;
+  const icsUrl = icsToken ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/public/calendar/${icsToken}/ics` : "";
+  function copyIcs() {
+    if (!icsUrl) return;
+    navigator.clipboard.writeText(icsUrl).then(() => toast.success("Calendar URL copied"));
   }
 
   async function exportData(format: "csv" | "json") {
@@ -213,6 +228,26 @@ function Settings() {
               <Button variant="outline" size="sm" onClick={exportXlsx}><FileSpreadsheet className="size-4" /> Excel</Button>
             </div>
           </div>
+        </div>
+      </Section>
+
+      <Section title="Push notifications">
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">Allow DisciplineOS to send you reminders even when this tab is in the background.</p>
+          <Button variant="outline" size="sm" onClick={enablePush}><Bell className="size-4" /> Enable push notifications</Button>
+        </div>
+      </Section>
+
+      <Section title="Calendar subscription">
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">Subscribe in Google / Apple Calendar to see your DisciplineOS schedule alongside everything else. Keep this URL private — anyone with it can read your schedule.</p>
+          <div className="flex gap-2">
+            <Input readOnly value={icsUrl} className="text-xs" />
+            <Button variant="outline" size="sm" onClick={copyIcs}><Copy className="size-4" /></Button>
+          </div>
+          <a href={icsUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-emerald hover:underline">
+            <CalendarSearch className="size-3" /> Preview feed
+          </a>
         </div>
       </Section>
 

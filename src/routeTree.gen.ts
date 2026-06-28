@@ -27,6 +27,7 @@ import { Route as AuthenticatedCoachRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
+import { Route as ApiPublicCalendarTokenIcsRouteImport } from './routes/api/public/calendar.$token.ics'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -118,6 +119,12 @@ const AuthenticatedAchievementsRoute =
     path: '/achievements',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicCalendarTokenIcsRoute =
+  ApiPublicCalendarTokenIcsRouteImport.update({
+    id: '/api/public/calendar/$token/ics',
+    path: '/api/public/calendar/$token/ics',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/tracker': typeof AuthenticatedTrackerRoute
   '/weekly': typeof AuthenticatedWeeklyRoute
   '/yearly': typeof AuthenticatedYearlyRoute
+  '/api/public/calendar/$token/ics': typeof ApiPublicCalendarTokenIcsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -156,6 +164,7 @@ export interface FileRoutesByTo {
   '/tracker': typeof AuthenticatedTrackerRoute
   '/weekly': typeof AuthenticatedWeeklyRoute
   '/yearly': typeof AuthenticatedYearlyRoute
+  '/api/public/calendar/$token/ics': typeof ApiPublicCalendarTokenIcsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -177,6 +186,7 @@ export interface FileRoutesById {
   '/_authenticated/tracker': typeof AuthenticatedTrackerRoute
   '/_authenticated/weekly': typeof AuthenticatedWeeklyRoute
   '/_authenticated/yearly': typeof AuthenticatedYearlyRoute
+  '/api/public/calendar/$token/ics': typeof ApiPublicCalendarTokenIcsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/tracker'
     | '/weekly'
     | '/yearly'
+    | '/api/public/calendar/$token/ics'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/tracker'
     | '/weekly'
     | '/yearly'
+    | '/api/public/calendar/$token/ics'
   id:
     | '__root__'
     | '/'
@@ -237,6 +249,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tracker'
     | '/_authenticated/weekly'
     | '/_authenticated/yearly'
+    | '/api/public/calendar/$token/ics'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -244,6 +257,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicCalendarTokenIcsRoute: typeof ApiPublicCalendarTokenIcsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -374,6 +388,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAchievementsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/calendar/$token/ics': {
+      id: '/api/public/calendar/$token/ics'
+      path: '/api/public/calendar/$token/ics'
+      fullPath: '/api/public/calendar/$token/ics'
+      preLoaderRoute: typeof ApiPublicCalendarTokenIcsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -419,6 +440,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicCalendarTokenIcsRoute: ApiPublicCalendarTokenIcsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
