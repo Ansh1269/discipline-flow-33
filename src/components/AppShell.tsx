@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, CalendarDays, Flame, BarChart3, Target, Sparkles, LogOut, Settings as SettingsIcon, Sun, Moon, Trophy, Bell, CalendarRange, CalendarCheck, CalendarSearch } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Flame, BarChart3, Target, Sparkles, LogOut, Settings as SettingsIcon, Sun, Moon, Trophy, Bell, CalendarRange, CalendarCheck, CalendarSearch, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
@@ -8,12 +8,13 @@ import { useTheme } from "@/hooks/useTheme";
 const NAV = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
   { to: "/schedule", label: "Schedule", icon: CalendarDays },
+  { to: "/tracker", label: "Tracker", icon: Activity },
   { to: "/habits", label: "Habits", icon: Flame },
-  { to: "/analytics", label: "Stats", icon: BarChart3 },
   { to: "/coach", label: "Coach", icon: Sparkles },
 ] as const;
 
 const SIDE_EXTRA = [
+  { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/calendar", label: "Calendar", icon: CalendarSearch },
   { to: "/weekly", label: "Weekly", icon: CalendarRange },
   { to: "/monthly", label: "Monthly", icon: CalendarCheck },

@@ -9,9 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut, Download, FileJson, FileSpreadsheet, Sun, Moon } from "lucide-react";
+import { LogOut, FileJson, FileSpreadsheet, FileText, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
-import { downloadCsv, downloadJson } from "@/lib/export";
+import { downloadCsv, downloadJson, downloadXlsx, downloadPdfReport } from "@/lib/export";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — DisciplineOS" }] }),
@@ -79,6 +79,59 @@ function Settings() {
     toast.success("Exported");
   }
 
+  async function exportXlsx() {
+    const [tasks, habits, logs, focus, goals] = await Promise.all([
+      supabase.from("tasks").select("*"),
+      supabase.from("habits").select("*"),
+      supabase.from("habit_logs").select("*"),
+      supabase.from("focus_sessions").select("*"),
+      supabase.from("goals").select("*"),
+    ]);
+    await downloadXlsx(`disciplineos-${new Date().toISOString().slice(0,10)}.xlsx`, {
+      Tasks: (tasks.data ?? []) as never,
+      Habits: (habits.data ?? []) as never,
+      HabitLogs: (logs.data ?? []) as never,
+      Focus: (focus.data ?? []) as never,
+      Goals: (goals.data ?? []) as never,
+    });
+    toast.success("Excel ready");
+  }
+
+  async function exportPdf(range: "day" | "week" | "month" | "year") {
+    const now = new Date();
+    const start = new Date(now);
+    if (range === "day") start.setHours(0,0,0,0);
+    else if (range === "week") start.setDate(now.getDate() - 7);
+    else if (range === "month") start.setMonth(now.getMonth() - 1);
+    else start.setFullYear(now.getFullYear() - 1);
+    const startISO = start.toISOString().slice(0, 10);
+    const [{ data: tasks = [] }, { data: focus = [] }, { data: habits = [] }] = await Promise.all([
+      supabase.from("tasks").select("title,category,status,scheduled_date,start_time,time_spent_minutes").gte("scheduled_date", startISO),
+      supabase.from("focus_sessions").select("started_at,duration_minutes").gte("started_at", start.toISOString()),
+      supabase.from("habits").select("name,current_streak,longest_streak"),
+    ]);
+    const tRows = (tasks ?? []).map((t) => [t.scheduled_date, t.start_time ?? "—", t.title, t.category, t.status, t.time_spent_minutes ?? 0]);
+    const fMinutes = (focus ?? []).reduce((a, f) => a + (f.duration_minutes ?? 0), 0);
+    const completed = (tasks ?? []).filter((t) => t.status === "completed").length;
+    const total = (tasks ?? []).length;
+    await downloadPdfReport(
+      `disciplineos-${range}-report.pdf`,
+      `DisciplineOS — ${range[0].toUpperCase()}${range.slice(1)}ly Report`,
+      `${name || user.email} · Generated ${now.toLocaleString()}`,
+      [
+        { heading: "Summary", columns: ["Metric", "Value"], rows: [
+          ["Tasks completed", `${completed} / ${total}`],
+          ["Completion rate", total ? `${Math.round((completed / total) * 100)}%` : "—"],
+          ["Focus minutes", String(fMinutes)],
+          ["Active habits", String((habits ?? []).length)],
+        ]},
+        { heading: "Tasks", columns: ["Date","Time","Title","Category","Status","Min"], rows: tRows.slice(0, 200) },
+        { heading: "Habits", columns: ["Habit","Current streak","Longest streak"], rows: (habits ?? []).map((h) => [h.name, h.current_streak ?? 0, h.longest_streak ?? 0]) },
+      ],
+    );
+    toast.success("PDF ready");
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <header>
@@ -142,11 +195,25 @@ function Settings() {
       </Section>
 
       <Section title="Backup & export">
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => exportData("json")}><FileJson className="size-4" /> Export JSON</Button>
-          <Button variant="outline" onClick={() => exportData("csv")}><FileSpreadsheet className="size-4" /> Export tasks CSV</Button>
+        <div className="space-y-3">
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5">Reports (PDF)</p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => exportPdf("day")}><FileText className="size-4" /> Daily</Button>
+              <Button variant="outline" size="sm" onClick={() => exportPdf("week")}><FileText className="size-4" /> Weekly</Button>
+              <Button variant="outline" size="sm" onClick={() => exportPdf("month")}><FileText className="size-4" /> Monthly</Button>
+              <Button variant="outline" size="sm" onClick={() => exportPdf("year")}><FileText className="size-4" /> Yearly</Button>
+            </div>
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5">Full backup</p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => exportData("json")}><FileJson className="size-4" /> JSON</Button>
+              <Button variant="outline" size="sm" onClick={() => exportData("csv")}><FileSpreadsheet className="size-4" /> CSV (tasks)</Button>
+              <Button variant="outline" size="sm" onClick={exportXlsx}><FileSpreadsheet className="size-4" /> Excel</Button>
+            </div>
+          </div>
         </div>
-        <p className="text-[11px] text-muted-foreground mt-2">Download a full backup of your data.</p>
       </Section>
 
       <Button variant="outline" onClick={signOut} className="w-full bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/15">
