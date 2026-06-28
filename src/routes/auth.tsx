@@ -84,13 +84,13 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-svh flex items-center justify-center px-4 py-10">
+    <main className="min-h-svh flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center text-center mb-8">
           <div className="size-14 rounded-2xl bg-emerald/15 grid place-items-center mb-4 soft-shadow">
             <Sparkles className="size-7 text-emerald" />
           </div>
-          <h1 className="font-display text-3xl font-bold">DisciplineOS</h1>
+          <h1 className="font-display text-3xl font-bold">DisciplineOS — Build discipline and earn results</h1>
           <p className="text-sm text-muted-foreground mt-1">Build the discipline. Earn the results.</p>
         </div>
 
@@ -149,7 +149,7 @@ function AuthPage() {
           By continuing you agree to our <Link to="/auth" className="underline">Terms</Link>.
         </p>
       </div>
-    </div>
+    </main>
   );
 }
 

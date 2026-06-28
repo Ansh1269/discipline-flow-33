@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://discipline-flow-33.lovable.app/sitemap.xml

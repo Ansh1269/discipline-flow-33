@@ -135,7 +135,7 @@ function Habits() {
                   <span>{consistency}% / 30d</span>
                 </div>
               </div>
-              <button onClick={() => remove.mutate(h.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition">
+              <button onClick={() => remove.mutate(h.id)} aria-label="Delete habit" className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition">
                 <Trash2 className="size-4" />
               </button>
             </div>
