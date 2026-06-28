@@ -55,6 +55,7 @@ function Coach() {
   const [messages, setMessages] = useState<Msg[]>(loadMessages);
   const [input, setInput] = useState("");
   const [pendingImages, setPendingImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState<{ name: string; progress: number }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -185,24 +186,51 @@ function Coach() {
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
-    const arr = Array.from(files).slice(0, 4 - pendingImages.length);
+    const remaining = 4 - pendingImages.length;
+    if (remaining <= 0) {
+      toast.error("You can attach up to 4 images per message");
+      return;
+    }
+    const incoming = Array.from(files);
+    if (incoming.length > remaining) {
+      toast.message(`Only adding the first ${remaining} — limit is 4 images`);
+    }
+    const arr = incoming.slice(0, remaining);
+    let added = 0;
     for (const file of arr) {
       if (!file.type.startsWith("image/")) {
-        toast.error("Only images are supported");
+        toast.error(`${file.name} isn't an image — only JPG, PNG, HEIC and WebP work here`);
         continue;
       }
       if (file.size > 6 * 1024 * 1024) {
-        toast.error(`${file.name} is too large (max 6MB)`);
+        const mb = (file.size / (1024 * 1024)).toFixed(1);
+        toast.error(`${file.name} is ${mb} MB — please pick something under 6 MB`);
         continue;
       }
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      setPendingImages((p) => (p.length >= 4 ? p : [...p, dataUrl]));
+      const entry = { name: file.name, progress: 0 };
+      setUploading((u) => [...u, entry]);
+      try {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onprogress = (ev) => {
+            if (!ev.lengthComputable) return;
+            const pct = Math.round((ev.loaded / ev.total) * 100);
+            setUploading((u) => u.map((it) => (it.name === file.name ? { ...it, progress: pct } : it)));
+          };
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error("Couldn't read this file — it may be corrupted"));
+          reader.onabort = () => reject(new Error("Upload cancelled"));
+          reader.readAsDataURL(file);
+        });
+        setPendingImages((p) => (p.length >= 4 ? p : [...p, dataUrl]));
+        added += 1;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : `Failed to attach ${file.name}`);
+      } finally {
+        setUploading((u) => u.filter((it) => it.name !== file.name));
+      }
     }
+    if (added > 0) toast.success(added === 1 ? "Image attached" : `${added} images attached`);
   };
 
   const handleRegenerate = () => {
