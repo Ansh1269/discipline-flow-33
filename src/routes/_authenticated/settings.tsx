@@ -239,6 +239,10 @@ function Settings() {
         </div>
       </Section>
 
+      <Section title="Get the app">
+        <DownloadAppSection />
+      </Section>
+
       <Section title="Calendar subscription">
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">Subscribe in Google / Apple Calendar to see your DisciplineOS schedule alongside everything else. Keep this URL private — anyone with it can read your schedule.</p>
