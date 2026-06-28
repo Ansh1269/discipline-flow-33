@@ -43,7 +43,7 @@ async function loadStats(supabase: any, days: number) {
   };
 }
 
-async function callGateway(messages: { role: string; content: string }[]) {
+async function callGateway(messages: { role: string; content: any }[]) {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) return { ok: false as const, message: "AI Gateway not configured." };
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -75,13 +75,33 @@ export const chatWithCoach = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
     z.object({
-      messages: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().min(1).max(4000) })).min(1).max(40),
+      messages: z
+        .array(
+          z.object({
+            role: z.enum(["user", "assistant"]),
+            content: z.string().max(4000),
+            images: z.array(z.string().max(8_000_000)).max(4).optional(),
+          }),
+        )
+        .min(1)
+        .max(40),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const stats = await loadStats(context.supabase, 14);
     const sys = `${SYSTEM}\n\nUser's last 14 days of stats (JSON, for grounding — do not dump verbatim):\n${JSON.stringify(stats)}`;
-    return await callGateway([{ role: "system", content: sys }, ...data.messages]);
+    const msgs: any[] = [{ role: "system", content: sys }];
+    for (const m of data.messages) {
+      if (m.images && m.images.length) {
+        const parts: any[] = [];
+        if (m.content) parts.push({ type: "text", text: m.content });
+        for (const url of m.images) parts.push({ type: "image_url", image_url: { url } });
+        msgs.push({ role: m.role, content: parts });
+      } else {
+        msgs.push({ role: m.role, content: m.content });
+      }
+    }
+    return await callGateway(msgs);
   });
 
 const INSIGHT_KINDS = ["schedule", "habits", "weak_areas", "weekly_plan", "celebrate"] as const;
