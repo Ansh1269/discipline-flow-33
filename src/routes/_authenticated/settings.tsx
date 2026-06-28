@@ -289,13 +289,18 @@ function detectDevice(): DeviceKind {
   return "other";
 }
 
-const DOWNLOADS: Record<Exclude<DeviceKind, "other">, { label: string; href: string; icon: typeof Apple; hint: string }> = {
-  ios: { label: "Download for iOS", href: "https://testflight.apple.com/", icon: Apple, hint: "Opens TestFlight" },
-  android: { label: "Download for Android", href: "https://play.google.com/store/apps/", icon: Smartphone, hint: "Opens Google Play" },
-  windows: { label: "Download for Windows", href: "/downloads/DisciplineOS-Setup-win-x64.zip", icon: Monitor, hint: "64-bit · ~95 MB" },
-  mac: { label: "Download for macOS", href: "https://testflight.apple.com/", icon: Apple, hint: "Opens TestFlight" },
-  linux: { label: "Download for Linux", href: "/downloads/DisciplineOS-linux-x64.tar.gz", icon: Monitor, hint: "tar.gz archive" },
+const DOWNLOADS: Record<Exclude<DeviceKind, "other">, { label: string; href: string; icon: typeof Apple; hint: string; toast: string; description: string }> = {
+  ios: { label: "Download for iOS", href: "https://testflight.apple.com/", icon: Apple, hint: "Opens TestFlight", toast: "Sending you to TestFlight", description: "iOS · TestFlight beta · ~80 MB" },
+  android: { label: "Download for Android", href: "https://play.google.com/store/apps/", icon: Smartphone, hint: "Opens Google Play", toast: "Sending you to Google Play", description: "Android 8.0+ · ~25 MB" },
+  windows: { label: "Download for Windows", href: "/downloads/DisciplineOS-Setup-win-x64.zip", icon: Monitor, hint: "64-bit · ~95 MB", toast: "Starting your Windows download", description: "Windows 10/11 · 64-bit · ~95 MB" },
+  mac: { label: "Download for macOS", href: "https://testflight.apple.com/", icon: Apple, hint: "Opens TestFlight", toast: "Sending you to TestFlight", description: "macOS · TestFlight beta" },
+  linux: { label: "Download for Linux", href: "/downloads/DisciplineOS-linux-x64.tar.gz", icon: Monitor, hint: "tar.gz archive", toast: "Starting your Linux download", description: "Linux x64 · tar.gz archive" },
 };
+
+function notifyDownload(kind: Exclude<DeviceKind, "other">) {
+  const d = DOWNLOADS[kind];
+  toast.success(d.toast, { description: d.description });
+}
 
 function DownloadAppSection() {
   const [device, setDevice] = useState<DeviceKind>("other");
@@ -317,11 +322,12 @@ function DownloadAppSection() {
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">Install DisciplineOS as a native app on your device.</p>
-      {primary && (
+      {primary && device !== "other" && (
         <a
           href={primary.href}
           target="_blank"
           rel="noreferrer noopener"
+          onClick={() => notifyDownload(device as Exclude<DeviceKind, "other">)}
           className="flex items-center justify-between gap-3 rounded-2xl bg-emerald text-white px-4 py-3 font-semibold soft-shadow hover:opacity-90 transition"
         >
           <span className="inline-flex items-center gap-2">
@@ -331,15 +337,15 @@ function DownloadAppSection() {
         </a>
       )}
       <div className="grid grid-cols-3 gap-2">
-        <a href={DOWNLOADS.ios.href} target="_blank" rel="noreferrer noopener" className="glass rounded-xl p-3 text-center hover:bg-white/5 transition">
+        <a href={DOWNLOADS.ios.href} target="_blank" rel="noreferrer noopener" onClick={() => notifyDownload("ios")} className="glass rounded-xl p-3 text-center hover:bg-white/5 transition">
           <Apple className="size-4 mx-auto mb-1" />
           <div className="text-[11px]">iOS</div>
         </a>
-        <a href={DOWNLOADS.android.href} target="_blank" rel="noreferrer noopener" className="glass rounded-xl p-3 text-center hover:bg-white/5 transition">
+        <a href={DOWNLOADS.android.href} target="_blank" rel="noreferrer noopener" onClick={() => notifyDownload("android")} className="glass rounded-xl p-3 text-center hover:bg-white/5 transition">
           <Smartphone className="size-4 mx-auto mb-1" />
           <div className="text-[11px]">Android</div>
         </a>
-        <a href={DOWNLOADS.windows.href} className="glass rounded-xl p-3 text-center hover:bg-white/5 transition">
+        <a href={DOWNLOADS.windows.href} onClick={() => notifyDownload("windows")} className="glass rounded-xl p-3 text-center hover:bg-white/5 transition">
           <Monitor className="size-4 mx-auto mb-1" />
           <div className="text-[11px]">Windows</div>
         </a>
