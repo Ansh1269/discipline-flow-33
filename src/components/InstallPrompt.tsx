@@ -11,7 +11,8 @@ export function InstallPrompt() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && localStorage.getItem(DISMISS_KEY)) setDismissed(true);
-    return onInstallAvailable(setAvailable);
+    const off = onInstallAvailable(setAvailable);
+    return () => { off; };
   }, []);
 
   if (!available || dismissed) return null;
