@@ -12,10 +12,10 @@ const NAV = [
   { to: "/tracker", label: "Tracker", icon: Activity },
   { to: "/habits", label: "Habits", icon: Flame },
   { to: "/coach", label: "Coach", icon: Sparkles },
+  { to: "/profile", label: "Profile", icon: UserIcon },
 ] as const;
 
 const SIDE_EXTRA = [
-  { to: "/profile", label: "Profile", icon: UserIcon },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/calendar", label: "Calendar", icon: CalendarSearch },
   { to: "/weekly", label: "Weekly", icon: CalendarRange },
