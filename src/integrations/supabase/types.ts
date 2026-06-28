@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      action_plans: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          source: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          source?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          source?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       focus_sessions: {
         Row: {
           created_at: string
