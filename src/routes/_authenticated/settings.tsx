@@ -42,8 +42,8 @@ function Settings() {
   });
 
   const saveSettings = useMutation({
-    mutationFn: async (patch: Partial<NonNullable<typeof settings>>) => {
-      const { error } = await supabase.from("settings").update(patch).eq("user_id", user.id);
+    mutationFn: async (patch: { notifications_enabled?: boolean; time_format?: string; week_start?: number; theme?: string; language?: string; reminder_sound?: string }) => {
+      const { error } = await supabase.from("settings").update(patch as never).eq("user_id", user.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["settings", user.id] }),
