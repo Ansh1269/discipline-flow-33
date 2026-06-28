@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
+import { LogOut, Download, FileJson, FileSpreadsheet, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
+import { downloadCsv, downloadJson } from "@/lib/export";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — DisciplineOS" }] }),
@@ -20,6 +22,7 @@ function Settings() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const { theme, toggle } = useTheme();
 
   const { data: settings } = useQuery({
     queryKey: ["settings", user.id],
@@ -55,6 +58,27 @@ function Settings() {
     navigate({ to: "/auth", replace: true });
   }
 
+  async function exportData(format: "csv" | "json") {
+    const [tasks, habits, logs, focus, goals] = await Promise.all([
+      supabase.from("tasks").select("*"),
+      supabase.from("habits").select("*"),
+      supabase.from("habit_logs").select("*"),
+      supabase.from("focus_sessions").select("*"),
+      supabase.from("goals").select("*"),
+    ]);
+    const stamp = new Date().toISOString().slice(0, 10);
+    if (format === "json") {
+      downloadJson(`disciplineos-export-${stamp}.json`, {
+        exported_at: new Date().toISOString(),
+        tasks: tasks.data ?? [], habits: habits.data ?? [], habit_logs: logs.data ?? [],
+        focus_sessions: focus.data ?? [], goals: goals.data ?? [],
+      });
+    } else {
+      downloadCsv(`disciplineos-tasks-${stamp}.csv`, (tasks.data ?? []) as never);
+    }
+    toast.success("Exported");
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <header>
@@ -72,6 +96,11 @@ function Settings() {
 
       <Section title="Preferences">
         <div className="space-y-4">
+          <Row label="Theme">
+            <Button variant="outline" size="sm" onClick={toggle}>
+              {theme === "dark" ? <><Sun className="size-4" /> Light</> : <><Moon className="size-4" /> Dark</>}
+            </Button>
+          </Row>
           <Row label="Notifications">
             <Switch checked={settings?.notifications_enabled ?? true} onCheckedChange={(v) => saveSettings.mutate({ notifications_enabled: v })} />
           </Row>
@@ -87,7 +116,37 @@ function Settings() {
               <SelectContent><SelectItem value="0">Sunday</SelectItem><SelectItem value="1">Monday</SelectItem></SelectContent>
             </Select>
           </Row>
+          <Row label="Language">
+            <Select value={settings?.language ?? "en"} onValueChange={(v) => saveSettings.mutate({ language: v })}>
+              <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="es">Español</SelectItem>
+                <SelectItem value="fr">Français</SelectItem>
+                <SelectItem value="de">Deutsch</SelectItem>
+              </SelectContent>
+            </Select>
+          </Row>
+          <Row label="Reminder sound">
+            <Select value={settings?.reminder_sound ?? "chime"} onValueChange={(v) => saveSettings.mutate({ reminder_sound: v })}>
+              <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="chime">Chime</SelectItem>
+                <SelectItem value="bell">Bell</SelectItem>
+                <SelectItem value="ping">Ping</SelectItem>
+                <SelectItem value="none">Silent</SelectItem>
+              </SelectContent>
+            </Select>
+          </Row>
         </div>
+      </Section>
+
+      <Section title="Backup & export">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => exportData("json")}><FileJson className="size-4" /> Export JSON</Button>
+          <Button variant="outline" onClick={() => exportData("csv")}><FileSpreadsheet className="size-4" /> Export tasks CSV</Button>
+        </div>
+        <p className="text-[11px] text-muted-foreground mt-2">Download a full backup of your data.</p>
       </Section>
 
       <Button variant="outline" onClick={signOut} className="w-full bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/15">
