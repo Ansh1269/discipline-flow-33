@@ -43,7 +43,7 @@ async function loadStats(supabase: any, days: number) {
   };
 }
 
-async function callGateway(messages: { role: string; content: string }[]) {
+async function callGateway(messages: { role: string; content: any }[]) {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) return { ok: false as const, message: "AI Gateway not configured." };
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
