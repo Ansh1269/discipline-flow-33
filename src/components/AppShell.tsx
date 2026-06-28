@@ -42,9 +42,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-svh pb-24 md:pb-8 md:pl-64">
+    <div className="min-h-dvh pb-24 md:pb-8 md:pl-64">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-lg focus:bg-emerald focus:text-emerald-foreground focus:px-3 focus:py-2 focus:text-sm focus:font-medium"
+      >
+        Skip to content
+      </a>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 flex-col p-5 border-r border-border bg-sidebar overflow-y-auto">
+      <aside aria-label="Primary" className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 flex-col p-5 border-r border-border bg-sidebar overflow-y-auto">
         <Link to="/dashboard" className="flex items-center gap-2 mb-8">
           <div className="size-9 rounded-xl bg-emerald/15 grid place-items-center">
             <Sparkles className="size-5 text-emerald" />
@@ -57,7 +63,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             const active = location.pathname.startsWith(n.to);
             return (
               <Link key={n.to} to={n.to}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active ? "bg-emerald/10 text-emerald" : "text-muted-foreground hover:text-foreground hover:bg-accent/10"}`}>
+                aria-current={active ? "page" : undefined}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50 ${active ? "bg-emerald/10 text-emerald" : "text-muted-foreground hover:text-foreground hover:bg-accent/10"}`}>
                 <Icon className="size-4" /> {n.label}
               </Link>
             );
@@ -68,26 +75,27 @@ export function AppShell({ children }: { children: ReactNode }) {
             const active = location.pathname.startsWith(n.to);
             return (
               <Link key={n.to} to={n.to}
-                className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${active ? "bg-emerald/10 text-emerald" : "text-muted-foreground hover:text-foreground hover:bg-accent/10"}`}>
+                aria-current={active ? "page" : undefined}
+                className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50 ${active ? "bg-emerald/10 text-emerald" : "text-muted-foreground hover:text-foreground hover:bg-accent/10"}`}>
                 <Icon className="size-4" /> {n.label}
               </Link>
             );
           })}
         </nav>
         <div className="mt-auto flex flex-col gap-1 pt-4">
-          <button onClick={toggle} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all">
+          <button onClick={toggle} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50">
             {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
             {theme === "dark" ? "Light mode" : "Dark mode"}
           </button>
-          <button onClick={signOut} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-destructive hover:bg-accent/10 transition-all">
+          <button onClick={signOut} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-destructive hover:bg-accent/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/40">
             <LogOut className="size-4" /> Sign out
           </button>
         </div>
       </aside>
 
-      <main className="max-w-2xl mx-auto px-4 pt-6 md:pt-10 md:px-8">
+      <main id="main-content" tabIndex={-1} className="max-w-2xl mx-auto px-4 pt-6 md:pt-10 md:px-8 focus:outline-none">
         <div className="md:hidden flex justify-end mb-2">
-          <button onClick={toggle} className="glass rounded-full size-9 grid place-items-center text-muted-foreground" aria-label="Toggle theme">
+          <button onClick={toggle} className="glass rounded-full min-h-11 min-w-11 grid place-items-center text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
             {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </button>
         </div>
@@ -95,14 +103,16 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2">
+      <nav aria-label="Primary" className="md:hidden fixed bottom-0 inset-x-0 z-50 px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2">
         <div className="glass rounded-2xl flex items-center justify-around px-2 py-2">
           {NAV.map((n) => {
             const Icon = n.icon;
             const active = location.pathname.startsWith(n.to);
             return (
               <Link key={n.to} to={n.to}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${active ? "text-emerald" : "text-muted-foreground"}`}>
+                aria-current={active ? "page" : undefined}
+                aria-label={n.label}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-h-11 min-w-11 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50 ${active ? "text-emerald" : "text-muted-foreground"}`}>
                 <Icon className={`size-5 transition-transform ${active ? "scale-110" : ""}`} />
                 <span className="text-[10px] font-medium">{n.label}</span>
               </Link>
