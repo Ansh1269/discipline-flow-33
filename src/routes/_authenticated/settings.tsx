@@ -36,11 +36,13 @@ function Settings() {
   });
 
   const [name, setName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   useEffect(() => { if (profile?.display_name) setName(profile.display_name); }, [profile?.display_name]);
+  useEffect(() => { setAvatarUrl(profile?.avatar_url ?? ""); }, [profile?.avatar_url]);
 
   const saveProfile = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("profiles").update({ display_name: name }).eq("id", user.id);
+      const { error } = await supabase.from("profiles").update({ display_name: name, avatar_url: avatarUrl || null }).eq("id", user.id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["profile", user.id] }); toast.success("Profile updated"); },
@@ -157,9 +159,23 @@ function Settings() {
 
       <Section title="Profile">
         <div className="space-y-3">
-          <div><Label>Display name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div><Label>Email</Label><Input value={user.email ?? ""} disabled /></div>
-          <Button onClick={() => saveProfile.mutate()} className="bg-emerald hover:bg-emerald/90 text-emerald-foreground">Save</Button>
+          <div className="flex items-center gap-3">
+            <div className="size-14 rounded-2xl bg-emerald/15 overflow-hidden grid place-items-center shrink-0">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="size-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              ) : (
+                <span className="font-display text-lg text-emerald">{(name || user.email || "?").slice(0, 1).toUpperCase()}</span>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium truncate">{name || "Your name"}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            </div>
+          </div>
+          <div><Label htmlFor="settings-name">Display name</Label><Input id="settings-name" value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div><Label htmlFor="settings-avatar">Avatar URL</Label><Input id="settings-avatar" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://…" /></div>
+          <div><Label htmlFor="settings-email">Email</Label><Input id="settings-email" value={user.email ?? ""} disabled /></div>
+          <Button onClick={() => saveProfile.mutate()} disabled={saveProfile.isPending} className="bg-emerald hover:bg-emerald/90 text-emerald-foreground">Save profile</Button>
         </div>
       </Section>
 
