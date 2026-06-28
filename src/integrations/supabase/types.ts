@@ -323,12 +323,15 @@ export type Database = {
       }
       tasks: {
         Row: {
+          attachments: Json
           category: Database["public"]["Enums"]["task_category"]
+          checklist: Json
           color: string | null
           completed_at: string | null
           created_at: string
           end_time: string | null
           id: string
+          links: Json
           notes: string | null
           position: number
           priority: Database["public"]["Enums"]["task_priority"]
@@ -341,12 +344,15 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attachments?: Json
           category?: Database["public"]["Enums"]["task_category"]
+          checklist?: Json
           color?: string | null
           completed_at?: string | null
           created_at?: string
           end_time?: string | null
           id?: string
+          links?: Json
           notes?: string | null
           position?: number
           priority?: Database["public"]["Enums"]["task_priority"]
@@ -359,12 +365,15 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attachments?: Json
           category?: Database["public"]["Enums"]["task_category"]
+          checklist?: Json
           color?: string | null
           completed_at?: string | null
           created_at?: string
           end_time?: string | null
           id?: string
+          links?: Json
           notes?: string | null
           position?: number
           priority?: Database["public"]["Enums"]["task_priority"]
