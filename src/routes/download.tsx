@@ -9,8 +9,12 @@ export const Route = createFileRoute("/download")({
       { name: "description", content: "Get DisciplineOS on your device. Install the iOS and Android apps or download the Windows desktop app to track habits, routines, and discipline anywhere." },
       { property: "og:title", content: "Download DisciplineOS for iOS, Android, and Windows" },
       { property: "og:description", content: "Native iOS, Android, and Windows apps for the DisciplineOS productivity tracker." },
+      { property: "og:url", content: "https://discipline-flow-33.lovable.app/download" },
+      { name: "twitter:title", content: "Download DisciplineOS for iOS, Android, and Windows" },
+      { name: "twitter:description", content: "Native iOS, Android, and Windows apps for the DisciplineOS productivity tracker." },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://discipline-flow-33.lovable.app/download" }],
   }),
   component: DownloadPage,
 });
