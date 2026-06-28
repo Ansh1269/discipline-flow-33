@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedYearlyRouteImport } from './routes/_authenticated/yearly'
 import { Route as AuthenticatedWeeklyRouteImport } from './routes/_authenticated/weekly'
+import { Route as AuthenticatedTrackerRouteImport } from './routes/_authenticated/tracker'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedRemindersRouteImport } from './routes/_authenticated/reminders'
@@ -54,6 +55,11 @@ const AuthenticatedYearlyRoute = AuthenticatedYearlyRouteImport.update({
 const AuthenticatedWeeklyRoute = AuthenticatedWeeklyRouteImport.update({
   id: '/weekly',
   path: '/weekly',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTrackerRoute = AuthenticatedTrackerRouteImport.update({
+  id: '/tracker',
+  path: '/tracker',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/reminders': typeof AuthenticatedRemindersRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/tracker': typeof AuthenticatedTrackerRoute
   '/weekly': typeof AuthenticatedWeeklyRoute
   '/yearly': typeof AuthenticatedYearlyRoute
 }
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/reminders': typeof AuthenticatedRemindersRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/tracker': typeof AuthenticatedTrackerRoute
   '/weekly': typeof AuthenticatedWeeklyRoute
   '/yearly': typeof AuthenticatedYearlyRoute
 }
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/_authenticated/reminders': typeof AuthenticatedRemindersRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/tracker': typeof AuthenticatedTrackerRoute
   '/_authenticated/weekly': typeof AuthenticatedWeeklyRoute
   '/_authenticated/yearly': typeof AuthenticatedYearlyRoute
 }
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/reminders'
     | '/schedule'
     | '/settings'
+    | '/tracker'
     | '/weekly'
     | '/yearly'
   fileRoutesByTo: FileRoutesByTo
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/reminders'
     | '/schedule'
     | '/settings'
+    | '/tracker'
     | '/weekly'
     | '/yearly'
   id:
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reminders'
     | '/_authenticated/schedule'
     | '/_authenticated/settings'
+    | '/_authenticated/tracker'
     | '/_authenticated/weekly'
     | '/_authenticated/yearly'
   fileRoutesById: FileRoutesById
@@ -276,6 +288,13 @@ declare module '@tanstack/react-router' {
       path: '/weekly'
       fullPath: '/weekly'
       preLoaderRoute: typeof AuthenticatedWeeklyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tracker': {
+      id: '/_authenticated/tracker'
+      path: '/tracker'
+      fullPath: '/tracker'
+      preLoaderRoute: typeof AuthenticatedTrackerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -370,6 +389,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRemindersRoute: typeof AuthenticatedRemindersRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedTrackerRoute: typeof AuthenticatedTrackerRoute
   AuthenticatedWeeklyRoute: typeof AuthenticatedWeeklyRoute
   AuthenticatedYearlyRoute: typeof AuthenticatedYearlyRoute
 }
@@ -386,6 +406,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRemindersRoute: AuthenticatedRemindersRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedTrackerRoute: AuthenticatedTrackerRoute,
   AuthenticatedWeeklyRoute: AuthenticatedWeeklyRoute,
   AuthenticatedYearlyRoute: AuthenticatedYearlyRoute,
 }
