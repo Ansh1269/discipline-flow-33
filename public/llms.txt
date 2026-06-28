@@ -1,0 +1,13 @@
+# DisciplineOS
+
+> AI-powered daily discipline and productivity tracker — schedules, habits, goals, analytics, and an AI coach to help you build consistent routines.
+
+DisciplineOS helps users plan daily routines, track habits, measure focus time and discipline scores, and receive AI-generated coaching from their actual performance data.
+
+## Pages
+
+- [Sign in / Sign up](/auth): Email or Google authentication to access DisciplineOS.
+
+## Optional
+
+- [Reset password](/reset-password): Password recovery flow.

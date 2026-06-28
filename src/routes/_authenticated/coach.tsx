@@ -206,6 +206,7 @@ function Coach() {
               onClick={clearChat}
               disabled={busy}
               title="Clear conversation"
+              aria-label="Clear conversation"
               className="text-xs p-1.5 rounded-lg glass-soft hover:bg-red/10 disabled:opacity-40"
             >
               <Trash2 className="size-3.5" />

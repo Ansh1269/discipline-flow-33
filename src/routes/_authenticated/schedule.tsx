@@ -181,7 +181,7 @@ function SortableRow({ task, onToggle, onRemove, onEdit }: { task: { id: string;
         </div>
         {task.notes && <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.notes}</div>}
       </button>
-      <button onClick={onRemove} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition"><Trash2 className="size-4" /></button>
+      <button onClick={onRemove} aria-label="Delete task" className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition"><Trash2 className="size-4" /></button>
     </div>
   );
 }
