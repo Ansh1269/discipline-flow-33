@@ -23,13 +23,13 @@ async function loadStats(supabase: any, days: number) {
   const missed = tasks.filter((t: any) => t.status === "missed" || t.status === "late").length;
   const focusMin = focus.reduce((s: number, r: any) => s + (r.duration_minutes ?? 0), 0);
   const deepMin = focus.filter((f: any) => f.is_deep_work).reduce((s: number, r: any) => s + (r.duration_minutes ?? 0), 0);
-  const byCategory = tasks.reduce<Record<string, { done: number; total: number }>>((acc: any, t: any) => {
+  const byCategory: Record<string, { done: number; total: number }> = {};
+  for (const t of tasks as any[]) {
     const k = t.category;
-    acc[k] ??= { done: 0, total: 0 };
-    acc[k].total += 1;
-    if (t.status === "completed") acc[k].done += 1;
-    return acc;
-  }, {});
+    byCategory[k] ??= { done: 0, total: 0 };
+    byCategory[k].total += 1;
+    if (t.status === "completed") byCategory[k].done += 1;
+  }
   return {
     window_days: days,
     tasks_total: tasks.length,
