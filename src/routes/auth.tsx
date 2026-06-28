@@ -14,7 +14,13 @@ export const Route = createFileRoute("/auth")({
     meta: [
       { title: "Sign in — DisciplineOS" },
       { name: "description", content: "Sign in or create your DisciplineOS account." },
+      { property: "og:title", content: "Sign in — DisciplineOS" },
+      { property: "og:description", content: "Sign in or create your DisciplineOS account to track habits, routines, and daily discipline." },
+      { property: "og:url", content: "https://discipline-flow-33.lovable.app/auth" },
+      { name: "twitter:title", content: "Sign in — DisciplineOS" },
+      { name: "twitter:description", content: "Sign in or create your DisciplineOS account." },
     ],
+    links: [{ rel: "canonical", href: "https://discipline-flow-33.lovable.app/auth" }],
   }),
   component: AuthPage,
 });

@@ -114,6 +114,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "DisciplineOS",
+          url: "https://discipline-flow-33.lovable.app",
+          description: "DisciplineOS helps you build daily discipline through habits, schedules, streaks, and AI-powered productivity insights.",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "DisciplineOS",
+          url: "https://discipline-flow-33.lovable.app",
+          logo: "https://discipline-flow-33.lovable.app/icon-512.png",
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,

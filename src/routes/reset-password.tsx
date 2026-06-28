@@ -9,7 +9,17 @@ import { Sparkles, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/reset-password")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Reset password — DisciplineOS" }] }),
+  head: () => ({
+    meta: [
+      { title: "Reset password — DisciplineOS" },
+      { name: "description", content: "Reset your DisciplineOS account password." },
+      { property: "og:title", content: "Reset password — DisciplineOS" },
+      { property: "og:description", content: "Reset your DisciplineOS account password." },
+      { property: "og:url", content: "https://discipline-flow-33.lovable.app/reset-password" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://discipline-flow-33.lovable.app/reset-password" }],
+  }),
   component: ResetPage,
 });
 
