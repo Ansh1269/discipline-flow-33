@@ -261,6 +261,10 @@ export type Database = {
           level: number
           longest_streak: number
           notes_rich: boolean
+          show_achievements: boolean
+          show_focus: boolean
+          show_streaks: boolean
+          show_xp: boolean
           timezone: string | null
           updated_at: string
           xp: number
@@ -276,6 +280,10 @@ export type Database = {
           level?: number
           longest_streak?: number
           notes_rich?: boolean
+          show_achievements?: boolean
+          show_focus?: boolean
+          show_streaks?: boolean
+          show_xp?: boolean
           timezone?: string | null
           updated_at?: string
           xp?: number
@@ -291,6 +299,10 @@ export type Database = {
           level?: number
           longest_streak?: number
           notes_rich?: boolean
+          show_achievements?: boolean
+          show_focus?: boolean
+          show_streaks?: boolean
+          show_xp?: boolean
           timezone?: string | null
           updated_at?: string
           xp?: number

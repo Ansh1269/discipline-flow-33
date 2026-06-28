@@ -60,6 +60,14 @@ function Settings() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["settings", user.id] }),
   });
 
+  const saveProfilePrivacy = useMutation({
+    mutationFn: async (patch: { show_streaks?: boolean; show_xp?: boolean; show_focus?: boolean; show_achievements?: boolean }) => {
+      const { error } = await supabase.from("profiles").update(patch as never).eq("id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["profile", user.id] }); qc.invalidateQueries({ queryKey: ["profile-page"] }); toast.success("Privacy updated"); },
+  });
+
   async function signOut() {
     await qc.cancelQueries(); qc.clear();
     await supabase.auth.signOut();
@@ -196,6 +204,36 @@ function Settings() {
         </div>
       </Section>
 
+      <Section title="Profile privacy">
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">Choose what shows on your profile page.</p>
+          <PrivacyRow
+            label="Show streaks"
+            description="Current and longest streak counters"
+            value={(profile as { show_streaks?: boolean } | null)?.show_streaks ?? true}
+            onChange={(v) => saveProfilePrivacy.mutate({ show_streaks: v })}
+          />
+          <PrivacyRow
+            label="Show XP & level"
+            description="Level badge and XP progress bar"
+            value={(profile as { show_xp?: boolean } | null)?.show_xp ?? true}
+            onChange={(v) => saveProfilePrivacy.mutate({ show_xp: v })}
+          />
+          <PrivacyRow
+            label="Show focus stats"
+            description="Total focus hours summary"
+            value={(profile as { show_focus?: boolean } | null)?.show_focus ?? true}
+            onChange={(v) => saveProfilePrivacy.mutate({ show_focus: v })}
+          />
+          <PrivacyRow
+            label="Show achievements"
+            description="Unlocked badges and milestones"
+            value={(profile as { show_achievements?: boolean } | null)?.show_achievements ?? true}
+            onChange={(v) => saveProfilePrivacy.mutate({ show_achievements: v })}
+          />
+        </div>
+      </Section>
+
       <Section title="Preferences">
         <div className="space-y-4">
           <Row label="Theme">
@@ -306,6 +344,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="flex items-center justify-between"><span className="text-sm">{label}</span>{children}</div>;
+}
+
+function PrivacyRow({ label, description, value, onChange }: { label: string; description: string; value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{label}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      <Switch checked={value} onCheckedChange={onChange} />
+    </div>
+  );
 }
 
 type DeviceKind = "ios" | "android" | "windows" | "mac" | "linux" | "other";

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Flame, Trophy, Zap, Target, Settings as SettingsIcon, Sparkles, CalendarDays } from "lucide-react";
+import { Flame, Trophy, Zap, Target, Settings as SettingsIcon, Sparkles, CalendarDays, Award, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile — DisciplineOS" }] }),
@@ -18,12 +18,17 @@ type ProfileData = {
     current_streak: number;
     longest_streak: number;
     created_at: string;
+    show_streaks: boolean;
+    show_xp: boolean;
+    show_focus: boolean;
+    show_achievements: boolean;
   } | null;
   email: string | null;
   totalDone: number;
   focusH: number;
   habitCount: number;
   goalCount: number;
+  achievements: Array<{ id: string; code: string; title: string; description: string | null; icon: string | null; unlocked_at: string }>;
 };
 
 function ProfilePage() {
@@ -33,19 +38,25 @@ function ProfilePage() {
       const { data: userRes } = await supabase.auth.getUser();
       const uid = userRes.user?.id;
       const [profileRes, tasksRes, focusRes, habitsRes, goalsRes] = await Promise.all([
-        supabase.from("profiles").select("display_name, avatar_url, bio, xp, level, current_streak, longest_streak, created_at").eq("id", uid!).maybeSingle(),
+        supabase.from("profiles").select("display_name, avatar_url, bio, xp, level, current_streak, longest_streak, created_at, show_streaks, show_xp, show_focus, show_achievements").eq("id", uid!).maybeSingle(),
         supabase.from("tasks").select("id", { count: "exact", head: true }).eq("status", "completed"),
         supabase.from("focus_sessions").select("duration_minutes"),
         supabase.from("habits").select("id", { count: "exact", head: true }).eq("archived", false),
         supabase.from("goals").select("id", { count: "exact", head: true }),
       ]);
+      const { data: ach } = await supabase
+        .from("achievements")
+        .select("id, code, title, description, icon, unlocked_at")
+        .order("unlocked_at", { ascending: false })
+        .limit(12);
       return {
-        profile: profileRes.data,
+        profile: profileRes.data as ProfileData["profile"],
         email: userRes.user?.email ?? null,
         totalDone: tasksRes.count ?? 0,
         focusH: Math.round((focusRes.data ?? []).reduce((s, r) => s + (r.duration_minutes ?? 0), 0) / 60 * 10) / 10,
         habitCount: habitsRes.count ?? 0,
         goalCount: goalsRes.count ?? 0,
+        achievements: ach ?? [],
       };
     },
   });
@@ -66,6 +77,10 @@ function ProfilePage() {
   const xpForNext = (p?.level ?? 1) * 500;
   const xpPct = p ? Math.min(100, Math.round((p.xp / xpForNext) * 100)) : 0;
   const memberSince = p?.created_at ? new Date(p.created_at).toLocaleDateString(undefined, { month: "long", year: "numeric" }) : "—";
+  const showXp = p?.show_xp ?? true;
+  const showStreaks = p?.show_streaks ?? true;
+  const showFocus = p?.show_focus ?? true;
+  const showAchievements = p?.show_achievements ?? true;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -104,6 +119,7 @@ function ProfilePage() {
           <p className="mt-4 text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{p.bio}</p>
         )}
 
+        {showXp ? (
         <div className="mt-5 flex items-center gap-3">
           <div className="size-10 rounded-xl bg-emerald/15 grid place-items-center font-display font-bold text-emerald shrink-0">
             {p?.level ?? 1}
@@ -118,13 +134,29 @@ function ProfilePage() {
             </div>
           </div>
         </div>
+        ) : (
+          <PrivateRow label="Level & XP hidden" />
+        )}
       </section>
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat icon={Flame} tone="text-orange" label="Current streak" value={`${p?.current_streak ?? 0}d`} />
-        <Stat icon={Trophy} tone="text-emerald" label="Longest streak" value={`${p?.longest_streak ?? 0}d`} />
+        {showStreaks ? (
+          <>
+            <Stat icon={Flame} tone="text-orange" label="Current streak" value={`${p?.current_streak ?? 0}d`} />
+            <Stat icon={Trophy} tone="text-emerald" label="Longest streak" value={`${p?.longest_streak ?? 0}d`} />
+          </>
+        ) : (
+          <>
+            <PrivateStat label="Current streak" />
+            <PrivateStat label="Longest streak" />
+          </>
+        )}
         <Stat icon={Target} tone="text-purple" label="Tasks done" value={data.totalDone} />
-        <Stat icon={Zap} tone="text-orange" label="Focus hours" value={`${data.focusH}h`} />
+        {showFocus ? (
+          <Stat icon={Zap} tone="text-orange" label="Focus hours" value={`${data.focusH}h`} />
+        ) : (
+          <PrivateStat label="Focus hours" />
+        )}
       </section>
 
       <section className="grid grid-cols-2 gap-3">
@@ -138,16 +170,52 @@ function ProfilePage() {
         </Link>
       </section>
 
-      <Link to="/achievements" className="glass rounded-3xl p-5 flex items-center gap-4 hover:bg-accent/5 transition-colors">
-        <div className="size-12 rounded-2xl bg-gradient-to-br from-orange to-red grid place-items-center">
-          <Sparkles className="size-5 text-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-display font-bold text-sm">View achievements</div>
-          <div className="text-xs text-muted-foreground">Badges, XP milestones, and streak rewards.</div>
-        </div>
-        <span className="text-muted-foreground text-sm">→</span>
-      </Link>
+      {showAchievements ? (
+        <section className="glass rounded-3xl p-5 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="size-10 rounded-2xl bg-gradient-to-br from-orange to-red grid place-items-center shrink-0">
+                <Award className="size-5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-display font-bold text-sm">Latest achievements</div>
+                <div className="text-xs text-muted-foreground">{data.achievements.length} badge{data.achievements.length === 1 ? "" : "s"} unlocked</div>
+              </div>
+            </div>
+            <Link to="/achievements" className="text-xs text-emerald hover:underline shrink-0">View all →</Link>
+          </div>
+
+          {data.achievements.length === 0 ? (
+            <div className="text-center py-6 text-xs text-muted-foreground">
+              <Sparkles className="size-5 mx-auto mb-2 text-orange/60" />
+              Complete tasks and build streaks to unlock your first badge.
+            </div>
+          ) : (
+            <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              {data.achievements.slice(0, 6).map((a) => (
+                <li key={a.id} className="rounded-2xl bg-accent/5 border border-white/5 p-3 hover:bg-accent/10 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <div className="size-8 rounded-xl bg-gradient-to-br from-orange/30 to-purple/30 grid place-items-center text-base shrink-0">
+                      {a.icon ?? "🏆"}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-medium text-xs truncate">{a.title}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {new Date(a.unlocked_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      </div>
+                    </div>
+                  </div>
+                  {a.description && (
+                    <p className="mt-1.5 text-[11px] text-muted-foreground line-clamp-2">{a.description}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : (
+        <PrivateRow label="Achievements hidden" />
+      )}
     </div>
   );
 }
@@ -159,6 +227,25 @@ function Stat({ icon: Icon, tone, label, value }: { icon: typeof Flame; tone: st
         <Icon className={`size-3.5 ${tone}`} /> {label}
       </div>
       <div className="font-display text-2xl font-bold mt-1">{value}</div>
+    </div>
+  );
+}
+
+function PrivateStat({ label }: { label: string }) {
+  return (
+    <div className="glass rounded-2xl p-4 opacity-70">
+      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <Lock className="size-3.5" /> {label}
+      </div>
+      <div className="font-display text-base font-medium mt-1 text-muted-foreground">Private</div>
+    </div>
+  );
+}
+
+function PrivateRow({ label }: { label: string }) {
+  return (
+    <div className="glass rounded-2xl p-4 flex items-center gap-2 text-xs text-muted-foreground">
+      <Lock className="size-3.5" /> {label} · <Link to="/settings" className="text-emerald hover:underline">Change in settings</Link>
     </div>
   );
 }
