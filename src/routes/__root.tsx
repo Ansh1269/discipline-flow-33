@@ -100,6 +100,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "DisciplineOS helps you build daily discipline through habits, schedules, streaks, and AI-powered productivity insights." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/453b0dce-84e4-4a2b-a088-5890bfb6a943" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/453b0dce-84e4-4a2b-a088-5890bfb6a943" },
+      { name: "google-site-verification", content: "ke8-K47z3l2HC3QcqrTa2hX_-Sj8IPODF45HQvOgUd4" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
