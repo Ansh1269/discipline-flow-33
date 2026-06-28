@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, CalendarDays, Flame, BarChart3, Target, Sparkles, LogOut, Settings as SettingsIcon, Sun, Moon, Trophy, Bell, CalendarRange, CalendarCheck, CalendarSearch, Activity } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Flame, BarChart3, Target, Sparkles, LogOut, Settings as SettingsIcon, Sun, Moon, Trophy, Bell, CalendarRange, CalendarCheck, CalendarSearch, Activity, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
@@ -24,6 +24,7 @@ const SIDE_EXTRA = [
   { to: "/achievements", label: "Achievements", icon: Trophy },
   { to: "/reminders", label: "Reminders", icon: Bell },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
+  { to: "/download", label: "Get the app", icon: Download },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
