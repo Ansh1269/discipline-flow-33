@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut, FileJson, FileSpreadsheet, FileText, Sun, Moon, Bell, Copy, CalendarSearch } from "lucide-react";
+import { LogOut, FileJson, FileSpreadsheet, FileText, Sun, Moon, Bell, Copy, CalendarSearch, Download, Apple, Smartphone, Monitor } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useTheme } from "@/hooks/useTheme";
 import { downloadCsv, downloadJson, downloadXlsx, downloadPdfReport } from "@/lib/export";
 import { enablePushNotifications } from "@/lib/reminder-scheduler";
