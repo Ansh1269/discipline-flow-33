@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut, FileJson, FileSpreadsheet, FileText, Sun, Moon, Bell, Copy, CalendarSearch } from "lucide-react";
+import { LogOut, FileJson, FileSpreadsheet, FileText, Sun, Moon, Bell, Copy, CalendarSearch, Download, Apple, Smartphone, Monitor } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useTheme } from "@/hooks/useTheme";
 import { downloadCsv, downloadJson, downloadXlsx, downloadPdfReport } from "@/lib/export";
 import { enablePushNotifications } from "@/lib/reminder-scheduler";
@@ -238,6 +239,10 @@ function Settings() {
         </div>
       </Section>
 
+      <Section title="Get the app">
+        <DownloadAppSection />
+      </Section>
+
       <Section title="Calendar subscription">
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">Subscribe in Google / Apple Calendar to see your DisciplineOS schedule alongside everything else. Keep this URL private — anyone with it can read your schedule.</p>
@@ -268,4 +273,82 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="flex items-center justify-between"><span className="text-sm">{label}</span>{children}</div>;
+}
+
+type DeviceKind = "ios" | "android" | "windows" | "mac" | "linux" | "other";
+
+function detectDevice(): DeviceKind {
+  if (typeof navigator === "undefined") return "other";
+  const ua = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  if (/iPad|iPhone|iPod/.test(ua) || (platform === "MacIntel" && (navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints! > 1)) return "ios";
+  if (/Android/i.test(ua)) return "android";
+  if (/Win/i.test(platform) || /Windows/i.test(ua)) return "windows";
+  if (/Mac/i.test(platform)) return "mac";
+  if (/Linux/i.test(platform)) return "linux";
+  return "other";
+}
+
+const DOWNLOADS: Record<Exclude<DeviceKind, "other">, { label: string; href: string; icon: typeof Apple; hint: string }> = {
+  ios: { label: "Download for iOS", href: "https://testflight.apple.com/", icon: Apple, hint: "Opens TestFlight" },
+  android: { label: "Download for Android", href: "https://play.google.com/store/apps/", icon: Smartphone, hint: "Opens Google Play" },
+  windows: { label: "Download for Windows", href: "/downloads/DisciplineOS-Setup-win-x64.zip", icon: Monitor, hint: "64-bit · ~95 MB" },
+  mac: { label: "Download for macOS", href: "https://testflight.apple.com/", icon: Apple, hint: "Opens TestFlight" },
+  linux: { label: "Download for Linux", href: "/downloads/DisciplineOS-linux-x64.tar.gz", icon: Monitor, hint: "tar.gz archive" },
+};
+
+function DownloadAppSection() {
+  const [device, setDevice] = useState<DeviceKind>("other");
+  useEffect(() => { setDevice(detectDevice()); }, []);
+  const primary = device !== "other" ? DOWNLOADS[device] : null;
+
+  async function installPwa() {
+    const w = window as Window & { deferredPwaPrompt?: { prompt: () => void; userChoice: Promise<{ outcome: string }> } };
+    if (w.deferredPwaPrompt) {
+      w.deferredPwaPrompt.prompt();
+      const choice = await w.deferredPwaPrompt.userChoice;
+      if (choice.outcome === "accepted") toast.success("Installing DisciplineOS…");
+      w.deferredPwaPrompt = undefined;
+    } else {
+      toast.message("On iOS: Share → Add to Home Screen. On Android: Chrome menu → Install app.");
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">Install DisciplineOS as a native app on your device.</p>
+      {primary && (
+        <a
+          href={primary.href}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="flex items-center justify-between gap-3 rounded-2xl bg-emerald text-white px-4 py-3 font-semibold soft-shadow hover:opacity-90 transition"
+        >
+          <span className="inline-flex items-center gap-2">
+            <primary.icon className="size-4" /> {primary.label}
+          </span>
+          <Download className="size-4" />
+        </a>
+      )}
+      <div className="grid grid-cols-3 gap-2">
+        <a href={DOWNLOADS.ios.href} target="_blank" rel="noreferrer noopener" className="glass rounded-xl p-3 text-center hover:bg-white/5 transition">
+          <Apple className="size-4 mx-auto mb-1" />
+          <div className="text-[11px]">iOS</div>
+        </a>
+        <a href={DOWNLOADS.android.href} target="_blank" rel="noreferrer noopener" className="glass rounded-xl p-3 text-center hover:bg-white/5 transition">
+          <Smartphone className="size-4 mx-auto mb-1" />
+          <div className="text-[11px]">Android</div>
+        </a>
+        <a href={DOWNLOADS.windows.href} className="glass rounded-xl p-3 text-center hover:bg-white/5 transition">
+          <Monitor className="size-4 mx-auto mb-1" />
+          <div className="text-[11px]">Windows</div>
+        </a>
+      </div>
+      <div className="flex flex-wrap gap-2 pt-1">
+        <Button variant="outline" size="sm" onClick={installPwa}><Download className="size-4" /> Install web app</Button>
+        <Link to="/download" className="inline-flex items-center gap-1 text-xs text-emerald hover:underline self-center">All download options →</Link>
+      </div>
+      {primary && <p className="text-[11px] text-muted-foreground">{primary.hint}</p>}
+    </div>
+  );
 }
