@@ -196,6 +196,36 @@ function Settings() {
         </div>
       </Section>
 
+      <Section title="Profile privacy">
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">Choose what shows on your profile page.</p>
+          <PrivacyRow
+            label="Show streaks"
+            description="Current and longest streak counters"
+            value={(profile as { show_streaks?: boolean } | null)?.show_streaks ?? true}
+            onChange={(v) => saveProfilePrivacy.mutate({ show_streaks: v })}
+          />
+          <PrivacyRow
+            label="Show XP & level"
+            description="Level badge and XP progress bar"
+            value={(profile as { show_xp?: boolean } | null)?.show_xp ?? true}
+            onChange={(v) => saveProfilePrivacy.mutate({ show_xp: v })}
+          />
+          <PrivacyRow
+            label="Show focus stats"
+            description="Total focus hours summary"
+            value={(profile as { show_focus?: boolean } | null)?.show_focus ?? true}
+            onChange={(v) => saveProfilePrivacy.mutate({ show_focus: v })}
+          />
+          <PrivacyRow
+            label="Show achievements"
+            description="Unlocked badges and milestones"
+            value={(profile as { show_achievements?: boolean } | null)?.show_achievements ?? true}
+            onChange={(v) => saveProfilePrivacy.mutate({ show_achievements: v })}
+          />
+        </div>
+      </Section>
+
       <Section title="Preferences">
         <div className="space-y-4">
           <Row label="Theme">
