@@ -309,6 +309,125 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_task_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          occurrence_date: string
+          override_end_time: string | null
+          override_notes: string | null
+          override_start_time: string | null
+          override_title: string | null
+          recurring_task_id: string
+          skipped: boolean
+          status: string
+          time_spent_minutes: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          occurrence_date: string
+          override_end_time?: string | null
+          override_notes?: string | null
+          override_start_time?: string | null
+          override_title?: string | null
+          recurring_task_id: string
+          skipped?: boolean
+          status?: string
+          time_spent_minutes?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          occurrence_date?: string
+          override_end_time?: string | null
+          override_notes?: string | null
+          override_start_time?: string | null
+          override_title?: string | null
+          recurring_task_id?: string
+          skipped?: boolean
+          status?: string
+          time_spent_minutes?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_task_logs_recurring_task_id_fkey"
+            columns: ["recurring_task_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_tasks: {
+        Row: {
+          category: string
+          color: string | null
+          created_at: string
+          end_time: string | null
+          ends_on: string | null
+          id: string
+          notes: string | null
+          position: number
+          priority: string
+          reminder_minutes_before: number | null
+          repeat_days: number[]
+          repeat_type: string
+          start_time: string | null
+          starts_on: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          color?: string | null
+          created_at?: string
+          end_time?: string | null
+          ends_on?: string | null
+          id?: string
+          notes?: string | null
+          position?: number
+          priority?: string
+          reminder_minutes_before?: number | null
+          repeat_days?: number[]
+          repeat_type?: string
+          start_time?: string | null
+          starts_on?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          color?: string | null
+          created_at?: string
+          end_time?: string | null
+          ends_on?: string | null
+          id?: string
+          notes?: string | null
+          position?: number
+          priority?: string
+          reminder_minutes_before?: number | null
+          repeat_days?: number[]
+          repeat_type?: string
+          start_time?: string | null
+          starts_on?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           created_at: string
