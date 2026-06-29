@@ -1,16 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { todayISO, formatTime } from "@/lib/date";
 import { ProgressRing } from "@/components/ProgressRing";
+import { fetchDayTasks, dayTasksKey, type DayTask } from "@/lib/dailyTasks";
 
 export const Route = createFileRoute("/_authenticated/tracker")({
   head: () => ({ meta: [{ title: "Tracker — DisciplineOS" }] }),
   component: Tracker,
 });
 
-type Task = { id: string; title: string; status: string; start_time: string | null; end_time: string | null; category: string; time_spent_minutes: number | null };
+type Task = DayTask;
 
 function classify(t: Task, now: Date): "completed" | "late" | "missed" | "current" | "upcoming" | "pending" {
   if (t.status === "completed") return "completed";
@@ -37,11 +37,8 @@ function Tracker() {
   const [date] = useState(todayISO());
   const now = new Date();
   const { data: tasks = [] } = useQuery({
-    queryKey: ["tracker", date],
-    queryFn: async () => {
-      const { data } = await supabase.from("tasks").select("*").eq("scheduled_date", date).order("start_time", { ascending: true, nullsFirst: false });
-      return (data ?? []) as Task[];
-    },
+    queryKey: dayTasksKey(date),
+    queryFn: () => fetchDayTasks(date),
     refetchInterval: 60_000,
   });
 
