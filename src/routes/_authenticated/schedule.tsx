@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { todayISO, formatTime } from "@/lib/date";
@@ -13,7 +13,8 @@ import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy, s
 import { CSS } from "@dnd-kit/utilities";
 import { TaskDialog } from "@/components/TaskDialog";
 import { TaskForm, emptyForm, type TaskFormState } from "@/components/RecurringTaskForm";
-import { occursOn, describeRepeat, addDaysISO, type RepeatType } from "@/lib/recurrence";
+import { describeRepeat, addDaysISO, type RepeatType } from "@/lib/recurrence";
+import { fetchDayTasks, dayTasksKey, invalidationKeys, type DayTask } from "@/lib/dailyTasks";
 
 export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({ meta: [{ title: "Schedule — DisciplineOS" }] }),
@@ -27,25 +28,7 @@ type RecurringTask = {
   repeat_type: string; repeat_days: number[];
   starts_on: string; ends_on: string | null; position: number;
 };
-type RecurringLog = {
-  id: string; recurring_task_id: string; occurrence_date: string;
-  status: string; completed_at: string | null; skipped: boolean;
-  override_title: string | null; override_start_time: string | null;
-  override_end_time: string | null; override_notes: string | null;
-};
-type OneTimeTask = {
-  id: string; title: string; status: string; start_time: string | null;
-  end_time: string | null; category: string; priority: string; notes: string | null;
-  position: number | null;
-};
-
-type Combined = {
-  key: string; kind: "one" | "recur";
-  id: string; recurring_id?: string; log_id?: string;
-  title: string; status: string; start_time: string | null; end_time: string | null;
-  category: string; priority: string; notes: string | null; position: number;
-  repeat_type?: string; repeat_days?: number[];
-};
+type Combined = DayTask;
 
 function Schedule() {
   const qc = useQueryClient();
@@ -57,14 +40,9 @@ function Schedule() {
   const [editRecurring, setEditRecurring] = useState<{ item: Combined } | null>(null);
   const [deleteRecurring, setDeleteRecurring] = useState<{ item: Combined } | null>(null);
 
-  const { data: oneTime = [] } = useQuery({
-    queryKey: ["tasks", date],
-    queryFn: async () => {
-      const { data } = await supabase.from("tasks").select("*").eq("scheduled_date", date)
-        .order("position", { ascending: true, nullsFirst: false })
-        .order("start_time", { ascending: true, nullsFirst: false });
-      return (data ?? []) as OneTimeTask[];
-    },
+  const { data: items = [] } = useQuery({
+    queryKey: dayTasksKey(date),
+    queryFn: () => fetchDayTasks(date),
   });
 
   const { data: recurring = [] } = useQuery({
@@ -75,55 +53,9 @@ function Schedule() {
     },
   });
 
-  const { data: logs = [] } = useQuery({
-    queryKey: ["recurring-logs", date],
-    queryFn: async () => {
-      const { data } = await supabase.from("recurring_task_logs" as never).select("*").eq("occurrence_date", date);
-      return ((data ?? []) as unknown as RecurringLog[]);
-    },
-  });
-
-  const items: Combined[] = useMemo(() => {
-    const recurItems: Combined[] = recurring
-      .filter((rt) => occursOn(rt, date))
-      .map((rt) => {
-        const log = logs.find((l) => l.recurring_task_id === rt.id);
-        if (log?.skipped) return null;
-        return {
-          key: `r:${rt.id}`,
-          kind: "recur" as const,
-          id: rt.id,
-          recurring_id: rt.id,
-          log_id: log?.id,
-          title: log?.override_title ?? rt.title,
-          status: log?.status ?? "pending",
-          start_time: log?.override_start_time ?? rt.start_time,
-          end_time: log?.override_end_time ?? rt.end_time,
-          category: rt.category,
-          priority: rt.priority,
-          notes: log?.override_notes ?? rt.notes,
-          position: rt.position ?? 0,
-          repeat_type: rt.repeat_type,
-          repeat_days: rt.repeat_days,
-        };
-      })
-      .filter(Boolean) as Combined[];
-
-    const oneItems: Combined[] = oneTime.map((t) => ({
-      key: `o:${t.id}`, kind: "one", id: t.id,
-      title: t.title, status: t.status,
-      start_time: t.start_time, end_time: t.end_time,
-      category: t.category, priority: t.priority, notes: t.notes,
-      position: t.position ?? 1000,
-    }));
-
-    return [...recurItems, ...oneItems].sort((a, b) => {
-      const at = a.start_time ?? "99:99";
-      const bt = b.start_time ?? "99:99";
-      if (at !== bt) return at.localeCompare(bt);
-      return a.position - b.position;
-    });
-  }, [recurring, logs, oneTime, date]);
+  function invalidateAll() {
+    for (const k of invalidationKeys(date)) qc.invalidateQueries({ queryKey: k as unknown as readonly unknown[] });
+  }
 
   // ---- Create ----
   const createTask = useMutation({
@@ -152,9 +84,7 @@ function Schedule() {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["tasks", date] });
-      qc.invalidateQueries({ queryKey: ["recurring-tasks"] });
-      qc.invalidateQueries({ queryKey: ["recurring-logs", date] });
+      invalidateAll();
       setOpenCreate(false); setCreateForm(emptyForm);
       toast.success("Task added");
     },
@@ -184,10 +114,7 @@ function Schedule() {
         if (error) throw error;
       }
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["tasks", date] });
-      qc.invalidateQueries({ queryKey: ["recurring-logs", date] });
-    },
+    onSuccess: () => invalidateAll(),
   });
 
   // ---- Reorder ----
@@ -198,10 +125,7 @@ function Schedule() {
         return supabase.from(table as never).update({ position: i } as never).eq("id", it.id);
       }));
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["tasks", date] });
-      qc.invalidateQueries({ queryKey: ["recurring-tasks"] });
-    },
+    onSuccess: () => invalidateAll(),
   });
 
   const sensors = useSensors(
@@ -218,7 +142,7 @@ function Schedule() {
     reorder.mutate(next);
   }
 
-  const editingOneTime = oneTime.find((t) => t.id === editId) ?? null;
+  const editingOneTime = items.find((t) => t.kind === "one" && t.id === editId) ?? null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -272,8 +196,7 @@ function Schedule() {
           date={date}
           onDone={() => {
             setEditRecurring(null);
-            qc.invalidateQueries({ queryKey: ["recurring-tasks"] });
-            qc.invalidateQueries({ queryKey: ["recurring-logs", date] });
+            invalidateAll();
           }}
         />
       )}
@@ -286,8 +209,7 @@ function Schedule() {
           date={date}
           onDone={() => {
             setDeleteRecurring(null);
-            qc.invalidateQueries({ queryKey: ["recurring-tasks"] });
-            qc.invalidateQueries({ queryKey: ["recurring-logs", date] });
+            invalidateAll();
           }}
         />
       )}
@@ -297,7 +219,7 @@ function Schedule() {
   async function deleteOneTime(id: string) {
     const { error } = await supabase.from("tasks").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
-    qc.invalidateQueries({ queryKey: ["tasks", date] });
+    invalidateAll();
     toast.success("Deleted");
   }
 }

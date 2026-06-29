@@ -11,6 +11,7 @@ import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { WeeklyChart, type WeeklyPoint } from "@/components/WeeklyChart";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
+import { fetchDayTasks, fetchRangeCompletion, dayTasksKey, rangeDayTasksKey } from "@/lib/dailyTasks";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Today — DisciplineOS" }, { name: "description", content: "Your daily discipline dashboard." }] }),
@@ -37,11 +38,8 @@ function Dashboard() {
   });
 
   const tasksQ = useQuery({
-    queryKey: ["tasks", date],
-    queryFn: async () => {
-      const { data } = await supabase.from("tasks").select("*").eq("scheduled_date", date).order("start_time", { ascending: true, nullsFirst: false });
-      return data ?? [];
-    },
+    queryKey: dayTasksKey(date),
+    queryFn: () => fetchDayTasks(date),
   });
   const tasks = tasksQ.data ?? [];
 
@@ -71,12 +69,9 @@ function Dashboard() {
     return d.toISOString().slice(0, 10);
   })();
 
-  const { data: rangeTasks = [] } = useQuery({
-    queryKey: ["tasks-range", windowStart],
-    queryFn: async () => {
-      const { data } = await supabase.from("tasks").select("scheduled_date, status").gte("scheduled_date", windowStart);
-      return data ?? [];
-    },
+  const { data: rangeCounts = {} } = useQuery({
+    queryKey: rangeDayTasksKey(windowStart, 84),
+    queryFn: () => fetchRangeCompletion(windowStart, 84),
   });
 
   const { data: rangeHabitLogs = [] } = useQuery({
@@ -118,9 +113,9 @@ function Dashboard() {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const key = d.toISOString().slice(0, 10);
-      const dayTasks = rangeTasks.filter((t) => t.scheduled_date === key);
-      const done = dayTasks.filter((t) => t.status === "completed").length;
-      const tot = dayTasks.length;
+      const c = rangeCounts[key] ?? { done: 0, total: 0 };
+      const done = c.done;
+      const tot = c.total;
       out.push({
         label: d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 3),
         date: key,
@@ -134,7 +129,7 @@ function Dashboard() {
 
   // Heatmap aggregation: count any activity per day
   const heatData: Record<string, number> = {};
-  rangeTasks.forEach((t) => { if (t.status === "completed") heatData[t.scheduled_date] = (heatData[t.scheduled_date] ?? 0) + 1; });
+  Object.entries(rangeCounts).forEach(([d, c]) => { if (c.done > 0) heatData[d] = (heatData[d] ?? 0) + c.done; });
   rangeHabitLogs.forEach((l) => { heatData[l.log_date] = (heatData[l.log_date] ?? 0) + 1; });
   rangeFocus.forEach((f) => { if ((f.duration_minutes ?? 0) > 0) heatData[f.session_date] = (heatData[f.session_date] ?? 0) + 1; });
 
@@ -146,8 +141,8 @@ function Dashboard() {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const key = d.toISOString().slice(0, 10);
-      const day = rangeTasks.filter((t) => t.scheduled_date === key);
-      const pct = day.length ? (day.filter((t) => t.status === "completed").length / day.length) * 100 : 0;
+      const c = rangeCounts[key] ?? { done: 0, total: 0 };
+      const pct = c.total ? (c.done / c.total) * 100 : 0;
       sum += pct;
     }
     return sum / 7;
