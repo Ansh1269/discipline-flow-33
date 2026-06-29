@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { todayISO, formatTime } from "@/lib/date";
@@ -13,7 +13,7 @@ import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy, s
 import { CSS } from "@dnd-kit/utilities";
 import { TaskDialog } from "@/components/TaskDialog";
 import { TaskForm, emptyForm, type TaskFormState } from "@/components/RecurringTaskForm";
-import { occursOn, describeRepeat, addDaysISO, type RepeatType } from "@/lib/recurrence";
+import { describeRepeat, addDaysISO, type RepeatType } from "@/lib/recurrence";
 import { fetchDayTasks, dayTasksKey, invalidationKeys, type DayTask } from "@/lib/dailyTasks";
 
 export const Route = createFileRoute("/_authenticated/schedule")({
