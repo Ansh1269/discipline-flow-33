@@ -547,6 +547,7 @@ function EntryDialog({ entry, open, onClose }: { entry: Entry | null; open: bool
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const recordTimerRef = useRef<number | null>(null);
+  const [askCoach, setAskCoach] = useState(false);
 
   const dayName = useMemo(() => {
     try { return format(parseISO(form.entry_date), "EEEE"); } catch { return ""; }
@@ -847,11 +848,25 @@ function EntryDialog({ entry, open, onClose }: { entry: Entry | null; open: bool
 
         <DialogFooter className="gap-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          {isEdit && entry && (
+            <Button type="button" variant="outline" onClick={() => setAskCoach(true)}>
+              <Sparkles className="size-4 text-emerald" /> Ask coach
+            </Button>
+          )}
           <Button onClick={() => save.mutate()} disabled={!canSave || save.isPending}>
             {save.isPending && <Loader2 className="size-4 animate-spin" />}
             {isEdit ? "Save changes" : "Save entry"}
           </Button>
         </DialogFooter>
+        {isEdit && entry && (
+          <AskCoachDialog
+            open={askCoach}
+            onClose={() => setAskCoach(false)}
+            source="journal"
+            id={entry.id}
+            title={entry.title || `Journal — ${entry.entry_date}`}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
