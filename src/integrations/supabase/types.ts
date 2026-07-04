@@ -324,6 +324,100 @@ export type Database = {
         }
         Relationships: []
       }
+      note_folders: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          parent_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "note_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          attachments: Json
+          category: string
+          color: string | null
+          content: string
+          created_at: string
+          folder_id: string | null
+          id: string
+          is_favorite: boolean
+          is_pinned: boolean
+          tags: string[]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attachments?: Json
+          category?: string
+          color?: string | null
+          content?: string
+          created_at?: string
+          folder_id?: string | null
+          id?: string
+          is_favorite?: boolean
+          is_pinned?: boolean
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attachments?: Json
+          category?: string
+          color?: string | null
+          content?: string
+          created_at?: string
+          folder_id?: string | null
+          id?: string
+          is_favorite?: boolean
+          is_pinned?: boolean
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "note_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
