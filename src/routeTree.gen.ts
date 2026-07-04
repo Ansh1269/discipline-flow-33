@@ -24,6 +24,7 @@ import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedRemindersRouteImport } from './routes/_authenticated/reminders'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedMonthlyRouteImport } from './routes/_authenticated/monthly'
+import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedHabitsRouteImport } from './routes/_authenticated/habits'
 import { Route as AuthenticatedGoalsRouteImport } from './routes/_authenticated/goals'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -108,6 +109,11 @@ const AuthenticatedMonthlyRoute = AuthenticatedMonthlyRouteImport.update({
   path: '/monthly',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHabitsRoute = AuthenticatedHabitsRouteImport.update({
   id: '/habits',
   path: '/habits',
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/goals': typeof AuthenticatedGoalsRoute
   '/habits': typeof AuthenticatedHabitsRouteWithChildren
+  '/journal': typeof AuthenticatedJournalRoute
   '/monthly': typeof AuthenticatedMonthlyRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/reminders': typeof AuthenticatedRemindersRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/goals': typeof AuthenticatedGoalsRoute
   '/habits': typeof AuthenticatedHabitsRouteWithChildren
+  '/journal': typeof AuthenticatedJournalRoute
   '/monthly': typeof AuthenticatedMonthlyRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/reminders': typeof AuthenticatedRemindersRoute
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/goals': typeof AuthenticatedGoalsRoute
   '/_authenticated/habits': typeof AuthenticatedHabitsRouteWithChildren
+  '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/monthly': typeof AuthenticatedMonthlyRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/reminders': typeof AuthenticatedRemindersRoute
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/goals'
     | '/habits'
+    | '/journal'
     | '/monthly'
     | '/profile'
     | '/reminders'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/goals'
     | '/habits'
+    | '/journal'
     | '/monthly'
     | '/profile'
     | '/reminders'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/goals'
     | '/_authenticated/habits'
+    | '/_authenticated/journal'
     | '/_authenticated/monthly'
     | '/_authenticated/profile'
     | '/_authenticated/reminders'
@@ -430,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMonthlyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/journal': {
+      id: '/_authenticated/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof AuthenticatedJournalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/habits': {
       id: '/_authenticated/habits'
       path: '/habits'
@@ -515,6 +534,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGoalsRoute: typeof AuthenticatedGoalsRoute
   AuthenticatedHabitsRoute: typeof AuthenticatedHabitsRouteWithChildren
+  AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedMonthlyRoute: typeof AuthenticatedMonthlyRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedRemindersRoute: typeof AuthenticatedRemindersRoute
@@ -533,6 +553,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGoalsRoute: AuthenticatedGoalsRoute,
   AuthenticatedHabitsRoute: AuthenticatedHabitsRouteWithChildren,
+  AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedMonthlyRoute: AuthenticatedMonthlyRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedRemindersRoute: AuthenticatedRemindersRoute,
