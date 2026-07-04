@@ -6,6 +6,7 @@ import {
   BookOpen, Plus, Search, Star, Calendar as CalendarIcon, Grid3x3, List, Mic,
   ImagePlus, X, Tag as TagIcon, Trash2, Loader2, Square, Play, Pause, Filter,
 } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { AskCoachDialog } from "@/components/AskCoachDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format, parseISO, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addMonths, subMonths, isSameMonth } from "date-fns";
