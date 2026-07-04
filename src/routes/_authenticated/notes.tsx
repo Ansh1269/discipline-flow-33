@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   StickyNote, Plus, Search, Star, Pin, Folder, FolderPlus, Tag as TagIcon,
   Trash2, Grid3x3, List as ListIcon, X, Loader2, ImagePlus, Mic, Square,
-  Paperclip, ChevronRight, Palette, MoreHorizontal,
+  Paperclip, ChevronRight, Palette, MoreHorizontal, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { NoteEditor } from "@/components/NoteEditor";
+import { AskCoachDialog } from "@/components/AskCoachDialog";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -459,6 +460,7 @@ function NoteDialog({ note, folders, onClose, onSave, onDelete }: {
   const [attachments, setAttachments] = useState<Attachment[]>(((note.attachments as unknown) as Attachment[]) ?? []);
   const [saving, setSaving] = useState(false);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [askCoach, setAskCoach] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Autosave (debounced) on change
@@ -565,6 +567,9 @@ function NoteDialog({ note, folders, onClose, onSave, onDelete }: {
               ))}
             </div>
             <div className="ml-auto flex items-center gap-1">
+              <Button size="sm" variant="ghost" onClick={() => setAskCoach(true)} title="Ask the coach">
+                <Sparkles className="size-4 text-emerald" />
+              </Button>
               <Button size="sm" variant="ghost" onClick={() => onSave({ is_pinned: !note.is_pinned })}>
                 <Pin className={`size-4 ${note.is_pinned ? "fill-current text-emerald" : ""}`} />
               </Button>
@@ -624,6 +629,13 @@ function NoteDialog({ note, folders, onClose, onSave, onDelete }: {
           </div>
           <Button onClick={onClose} className="bg-emerald text-emerald-foreground hover:bg-emerald/90">Done</Button>
         </DialogFooter>
+        <AskCoachDialog
+          open={askCoach}
+          onClose={() => setAskCoach(false)}
+          source="note"
+          id={note.id}
+          title={title || "Untitled note"}
+        />
       </DialogContent>
     </Dialog>
   );
