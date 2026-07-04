@@ -249,6 +249,81 @@ export type Database = {
         }
         Relationships: []
       }
+      journal_entries: {
+        Row: {
+          accomplishments: string | null
+          attachments: Json
+          biggest_achievement: string | null
+          body: string
+          challenges: string | null
+          created_at: string
+          energy_level: number | null
+          entry_date: string
+          entry_time: string
+          gratitude: string | null
+          id: string
+          improvements: string | null
+          is_favorite: boolean
+          lessons: string | null
+          mood: string | null
+          productivity_rating: number | null
+          reflections: string | null
+          tags: string[]
+          title: string | null
+          updated_at: string
+          user_id: string
+          weather: string | null
+        }
+        Insert: {
+          accomplishments?: string | null
+          attachments?: Json
+          biggest_achievement?: string | null
+          body?: string
+          challenges?: string | null
+          created_at?: string
+          energy_level?: number | null
+          entry_date?: string
+          entry_time?: string
+          gratitude?: string | null
+          id?: string
+          improvements?: string | null
+          is_favorite?: boolean
+          lessons?: string | null
+          mood?: string | null
+          productivity_rating?: number | null
+          reflections?: string | null
+          tags?: string[]
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          weather?: string | null
+        }
+        Update: {
+          accomplishments?: string | null
+          attachments?: Json
+          biggest_achievement?: string | null
+          body?: string
+          challenges?: string | null
+          created_at?: string
+          energy_level?: number | null
+          entry_date?: string
+          entry_time?: string
+          gratitude?: string | null
+          id?: string
+          improvements?: string | null
+          is_favorite?: boolean
+          lessons?: string | null
+          mood?: string | null
+          productivity_rating?: number | null
+          reflections?: string | null
+          tags?: string[]
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          weather?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
