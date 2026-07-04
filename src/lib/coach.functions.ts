@@ -36,7 +36,7 @@ async function loadContent(supabase: any, days: number) {
       .limit(30),
     supabase
       .from("journal_entries")
-      .select("id, entry_date, mood, energy_level, productivity_rating, tags, accomplishments, gratitude, lessons, challenges, improvements, reflections, content, is_favorite")
+      .select("id, entry_date, mood, energy_level, productivity_rating, tags, accomplishments, biggest_achievement, gratitude, lessons, challenges, improvements, reflections, body, is_favorite")
       .gte("entry_date", startD.toISOString().slice(0, 10))
       .order("entry_date", { ascending: false })
       .limit(30),
@@ -59,12 +59,13 @@ async function loadContent(supabase: any, days: number) {
     productivity: e.productivity_rating,
     tags: e.tags,
     accomplishments: (e.accomplishments ?? "").slice(0, 300),
+    biggest_achievement: (e.biggest_achievement ?? "").slice(0, 300),
     gratitude: (e.gratitude ?? "").slice(0, 300),
     lessons: (e.lessons ?? "").slice(0, 300),
     challenges: (e.challenges ?? "").slice(0, 300),
     improvements: (e.improvements ?? "").slice(0, 300),
     reflections: (e.reflections ?? "").slice(0, 300),
-    content: stripHtml(e.content ?? "").slice(0, 400),
+    body: stripHtml(e.body ?? "").slice(0, 400),
   }));
   return { notes, journal: entries };
 }
@@ -233,7 +234,7 @@ export const analyzeItem = createServerFn({ method: "POST" })
     } else {
       const { data: e, error } = await context.supabase
         .from("journal_entries")
-        .select("entry_date, mood, energy_level, productivity_rating, tags, accomplishments, gratitude, lessons, challenges, improvements, reflections, content")
+        .select("entry_date, mood, energy_level, productivity_rating, tags, accomplishments, biggest_achievement, gratitude, lessons, challenges, improvements, reflections, body")
         .eq("id", data.id)
         .single();
       if (error || !e) return { ok: false as const, message: "Journal entry not found." };
@@ -244,12 +245,13 @@ export const analyzeItem = createServerFn({ method: "POST" })
         `Mood: ${je.mood ?? "—"} • Energy: ${je.energy_level ?? "—"} • Productivity: ${je.productivity_rating ?? "—"}`,
         `Tags: ${(je.tags ?? []).join(", ")}`,
         je.accomplishments && `Accomplishments: ${je.accomplishments}`,
+        je.biggest_achievement && `Biggest achievement: ${je.biggest_achievement}`,
         je.gratitude && `Gratitude: ${je.gratitude}`,
         je.lessons && `Lessons: ${je.lessons}`,
         je.challenges && `Challenges: ${je.challenges}`,
         je.improvements && `Improvements: ${je.improvements}`,
         je.reflections && `Reflections: ${je.reflections}`,
-        stripHtml(je.content ?? ""),
+        stripHtml(je.body ?? ""),
       ].filter(Boolean).join("\n\n");
     }
     const capped = body.slice(0, 12000);
