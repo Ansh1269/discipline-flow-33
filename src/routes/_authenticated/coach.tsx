@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Wand2, Loader2, Send, User, Bot, RefreshCw, BookmarkPlus, Trash2, ClipboardList, CalendarClock, Target, AlertTriangle, ListChecks, Trophy, Camera, ImagePlus, X } from "lucide-react";
+import { Sparkles, Wand2, Loader2, Send, User, Bot, RefreshCw, BookmarkPlus, Trash2, ClipboardList, CalendarClock, Target, AlertTriangle, ListChecks, Trophy, Camera, ImagePlus, X, TrendingUp, Repeat, BookOpen, Compass, Lightbulb } from "lucide-react";
 import { generateCoachReport, chatWithCoach, generateCoachInsight } from "@/lib/coach.functions";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
@@ -28,13 +28,28 @@ const SUGGESTIONS = [
   "Where am I slipping?",
 ];
 
-type InsightKind = "schedule" | "habits" | "weak_areas" | "weekly_plan" | "celebrate";
+type InsightKind =
+  | "schedule"
+  | "habits"
+  | "weak_areas"
+  | "weekly_plan"
+  | "celebrate"
+  | "productivity_patterns"
+  | "recurring_habits"
+  | "weekly_reflection"
+  | "goal_recs"
+  | "journal_insights";
 const INSIGHTS: { kind: InsightKind; label: string; icon: typeof CalendarClock; tone: string }[] = [
   { kind: "schedule", label: "Plan tomorrow", icon: CalendarClock, tone: "text-emerald bg-emerald/15" },
   { kind: "habits", label: "Recommend habits", icon: Target, tone: "text-purple bg-purple/15" },
   { kind: "weak_areas", label: "Weak areas", icon: AlertTriangle, tone: "text-orange bg-orange/15" },
   { kind: "weekly_plan", label: "Weekly plan", icon: ListChecks, tone: "text-primary bg-primary/15" },
   { kind: "celebrate", label: "Celebrate wins", icon: Trophy, tone: "text-emerald bg-emerald/15" },
+  { kind: "productivity_patterns", label: "Productivity patterns", icon: TrendingUp, tone: "text-primary bg-primary/15" },
+  { kind: "recurring_habits", label: "Recurring habits", icon: Repeat, tone: "text-purple bg-purple/15" },
+  { kind: "weekly_reflection", label: "Weekly reflection", icon: BookOpen, tone: "text-emerald bg-emerald/15" },
+  { kind: "goal_recs", label: "Recommend goals", icon: Compass, tone: "text-orange bg-orange/15" },
+  { kind: "journal_insights", label: "Journal insights", icon: Lightbulb, tone: "text-emerald bg-emerald/15" },
 ];
 
 function loadMessages(): Msg[] {
