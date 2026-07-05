@@ -1,10 +1,11 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, CalendarDays, Flame, BarChart3, Target, Sparkles, LogOut, Settings as SettingsIcon, Sun, Moon, Trophy, Bell, CalendarRange, CalendarCheck, CalendarSearch, Activity, Download, User as UserIcon, BookOpen, StickyNote } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Flame, BarChart3, Target, Sparkles, LogOut, Settings as SettingsIcon, Sun, Moon, Trophy, Bell, CalendarRange, CalendarCheck, CalendarSearch, Activity, Download, User as UserIcon, BookOpen, StickyNote, Menu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useTheme } from "@/hooks/useTheme";
 import { useReminderScheduler } from "@/lib/reminder-scheduler";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const NAV = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
@@ -36,6 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const { theme, toggle } = useTheme();
   useReminderScheduler();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   async function signOut() {
     await qc.cancelQueries();
@@ -97,7 +99,37 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <main id="main-content" tabIndex={-1} className="max-w-2xl mx-auto px-4 pt-6 md:pt-10 md:px-8 focus:outline-none">
-        <div className="md:hidden flex justify-end mb-2">
+        <div className="md:hidden flex justify-between items-center mb-2 gap-2">
+          <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+            <SheetTrigger asChild>
+              <button className="glass rounded-full min-h-11 min-w-11 grid place-items-center text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50" aria-label="Open menu">
+                <Menu className="size-4" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-72 p-4 overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <Sparkles className="size-4 text-emerald" /> DisciplineOS
+                </SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-1 mt-4">
+                {[...NAV, ...SIDE_EXTRA].map((n) => {
+                  const Icon = n.icon;
+                  const active = location.pathname.startsWith(n.to);
+                  return (
+                    <Link key={n.to} to={n.to} onClick={() => setMoreOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active ? "bg-emerald/10 text-emerald" : "text-muted-foreground hover:text-foreground hover:bg-accent/10"}`}>
+                      <Icon className="size-4" /> {n.label}
+                    </Link>
+                  );
+                })}
+                <div className="my-2 h-px bg-border" />
+                <button onClick={() => { setMoreOpen(false); void signOut(); }} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-destructive hover:bg-accent/10 transition-all">
+                  <LogOut className="size-4" /> Sign out
+                </button>
+              </nav>
+            </SheetContent>
+          </Sheet>
           <button onClick={toggle} className="glass rounded-full min-h-11 min-w-11 grid place-items-center text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
             {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </button>
