@@ -3,7 +3,7 @@
 // WebAuthn platform authenticator for biometrics. No secrets ever leave the device.
 
 type Method = "pin4" | "pin6" | "password";
-export type AutoLockMs = 0 | 30_000 | 60_000 | 5 * 60_000 | 15 * 60_000;
+export type AutoLockMs = 0 | 30_000 | 60_000 | 300_000 | 900_000;
 
 export interface LockConfig {
   enabled: boolean;
@@ -160,4 +160,4 @@ export function disableBiometric(userId: string, cfg: LockConfig): LockConfig {
 export function autoLockLabel(ms: AutoLockMs): string {
   return ms === 0 ? "Immediately" : ms < 60_000 ? `${ms / 1000}s` : `${ms / 60_000} min`;
 }
-export const AUTO_LOCK_OPTIONS: AutoLockMs[] = [0, 30_000, 60_000, 5 * 60_000, 15 * 60_000];
+export const AUTO_LOCK_OPTIONS: AutoLockMs[] = [0, 30_000, 60_000, 300_000, 900_000];
