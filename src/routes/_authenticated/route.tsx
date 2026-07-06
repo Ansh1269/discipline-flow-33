@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
+import { AppLockGate } from "@/components/AppLockGate";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -11,12 +12,21 @@ export const Route = createFileRoute("/_authenticated")({
     return { user: data.user };
   },
   component: () => (
-    <AppShell>
-      <Outlet />
-      <OnboardingMount />
-    </AppShell>
+    <GatedShell />
   ),
 });
+
+function GatedShell() {
+  const { user } = Route.useRouteContext();
+  return (
+    <AppLockGate userId={user.id}>
+      <AppShell>
+        <Outlet />
+        <OnboardingMount />
+      </AppShell>
+    </AppLockGate>
+  );
+}
 
 function OnboardingMount() {
   const { user } = Route.useRouteContext();
